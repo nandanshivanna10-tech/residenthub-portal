@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Building2, Eye, EyeOff } from "lucide-react";
-import logo from "../assets/logo.jpeg";
 
 export default function Login() {
   const [role, setRole] = useState("Resident");
@@ -14,12 +13,7 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen relative">
-      <img
-        src={logo}
-        alt="Code Morphicx"
-        className="fixed top-4 right-4 w-16 h-16 md:w-20 md:h-20 object-contain z-50"
-      />
+    <div className="flex min-h-screen relative">  
 
       <div className="w-full md:w-1/2 flex flex-col items-center justify-center px-8">
         <div className="bg-blue-600 text-white rounded-xl p-3 mb-4">
