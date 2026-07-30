@@ -5,7 +5,7 @@ export default function BrandLogo() {
     <img
       src={logo}
       alt="Code Morphicx"
-      className="fixed top-4 right-4 w-16 h-16 md:w-20 md:h-20 object-contain z-[9999] pointer-events-none"
+      className="hidden lg:block fixed top-3 right-3 w-24 h-24 object-contain z-[9999] pointer-events-none"
     />
   );
 }
