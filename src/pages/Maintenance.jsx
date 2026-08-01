@@ -66,6 +66,8 @@ export default function Maintenance() {
             <option>Electrical</option>
             <option>Carpentry</option>
             <option>Appliance Repair</option>
+            <option>General</option>
+
           </select>
 
           <label className="text-sm font-medium text-gray-700">Description</label>
