@@ -1,12 +1,15 @@
-import { Search, Bell, Sun, Moon, Globe } from "lucide-react";
+import { Search, Bell, Sun, Moon, Globe, Wallet } from "lucide-react";
 import { useState } from "react";
 import { useTheme } from "../../context/ThemeContext";
 import { useLanguage } from "../../context/LanguageContext";
+import { useCurrency } from "../../context/CurrencyContext";
 
 export default function Topbar({ title }) {
   const { darkMode, toggleTheme } = useTheme();
   const { lang, changeLanguage, t } = useLanguage();
+  const { currency, changeCurrency } = useCurrency();
   const [showLangMenu, setShowLangMenu] = useState(false);
+  const [showCurrencyMenu, setShowCurrencyMenu] = useState(false);
 
   return (
     <header className="flex items-center justify-between px-8 py-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 transition-colors">
@@ -29,6 +32,35 @@ export default function Topbar({ title }) {
         >
           {darkMode ? <Sun size={18} /> : <Moon size={18} />}
         </button>
+
+        <div className="relative">
+          <button
+            onClick={() => setShowCurrencyMenu(!showCurrencyMenu)}
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 flex items-center gap-1"
+            title="Change currency"
+          >
+            <Wallet size={18} />
+            <span className="text-xs font-medium">{currency}</span>
+          </button>
+          {showCurrencyMenu && (
+            <div className="absolute right-0 mt-2 w-32 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
+              {["USD", "INR"].map((code) => (
+                <button
+                  key={code}
+                  onClick={() => {
+                    changeCurrency(code);
+                    setShowCurrencyMenu(false);
+                  }}
+                  className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 ${
+                    currency === code ? "text-blue-600 font-medium" : "text-gray-700 dark:text-gray-200"
+                  }`}
+                >
+                  {code === "USD" ? "USD ($)" : "INR (₹)"}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         <div className="relative">
           <button
