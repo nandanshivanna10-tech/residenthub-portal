@@ -1,21 +1,24 @@
 import { Outlet, useLocation } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
-
-const titles = {
-  "/dashboard": "Dashboard",
-  "/maintenance": "Maintenance",
-  "/visitors": "Visitors",
-  "/announcements": "Announcements",
-  "/bills": "Bills",
-  "/events": "Events",
-  "/directory": "Directory",
-  "/profile": "Profile",
-};
+import { useLanguage } from "../../context/LanguageContext";
 
 export default function DashboardLayout() {
   const location = useLocation();
-  const title = titles[location.pathname] || "ResidentHub";
+  const { t } = useLanguage();
+
+  const titleKeys = {
+   "/dashboard": "dashboard",
+   "/maintenance": "maintenanceTitle",
+   "/visitors": "visitors",
+   "/announcements": "announcements",
+   "/bills": "bills",
+   "/events": "events",
+   "/directory": "directory",
+   "/profile": "profile",
+ };
+
+  const title = t(titleKeys[location.pathname] || "dashboard");
 
   return (
     <div className="flex">
