@@ -1,13 +1,13 @@
 import { Search, Bell, Sun, Moon, Globe, Wallet } from "lucide-react";
 import { useState } from "react";
 import { useTheme } from "../../context/ThemeContext";
-import { useLanguage } from "../../context/LanguageContext";
-import { useCurrency } from "../../context/CurrencyContext";
+import { useLanguage, languageList } from "../../context/LanguageContext";
+import { useCurrency, currencyList } from "../../context/CurrencyContext";
 
 export default function Topbar({ title }) {
   const { darkMode, toggleTheme } = useTheme();
   const { lang, changeLanguage, t } = useLanguage();
-  const { currency, changeCurrency } = useCurrency();
+  const { currency, changeCurrency, currencyLabel } = useCurrency();
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [showCurrencyMenu, setShowCurrencyMenu] = useState(false);
 
@@ -43,8 +43,8 @@ export default function Topbar({ title }) {
             <span className="text-xs font-medium">{currency}</span>
           </button>
           {showCurrencyMenu && (
-            <div className="absolute right-0 mt-2 w-32 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
-              {["USD", "INR"].map((code) => (
+            <div className="absolute right-0 mt-2 w-36 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
+              {currencyList.map((code) => (
                 <button
                   key={code}
                   onClick={() => {
@@ -55,7 +55,7 @@ export default function Topbar({ title }) {
                     currency === code ? "text-blue-600 font-medium" : "text-gray-700 dark:text-gray-200"
                   }`}
                 >
-                  {code === "USD" ? "USD ($)" : "INR (₹)"}
+                  {currencyLabel(code)}
                 </button>
               ))}
             </div>
@@ -72,8 +72,8 @@ export default function Topbar({ title }) {
             <span className="text-xs font-medium uppercase">{lang}</span>
           </button>
           {showLangMenu && (
-            <div className="absolute right-0 mt-2 w-32 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
-              {["en", "hi"].map((code) => (
+            <div className="absolute right-0 mt-2 w-36 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
+              {languageList.map(({ code, label }) => (
                 <button
                   key={code}
                   onClick={() => {
@@ -84,7 +84,7 @@ export default function Topbar({ title }) {
                     lang === code ? "text-blue-600 font-medium" : "text-gray-700 dark:text-gray-200"
                   }`}
                 >
-                  {code === "en" ? "English" : "हिंदी"}
+                  {label}
                 </button>
               ))}
             </div>

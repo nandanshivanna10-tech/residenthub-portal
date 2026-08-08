@@ -3,6 +3,14 @@ import { translations } from "../i18n/translations";
 
 const LanguageContext = createContext();
 
+export const languageList = [
+  { code: "en", label: "English" },
+  { code: "hi", label: "हिंदी" },
+  { code: "kn", label: "ಕನ್ನಡ" },
+  { code: "ta", label: "தமிழ்" },
+  { code: "mr", label: "मराठी" },
+];
+
 export function LanguageProvider({ children }) {
   const [lang, setLang] = useState(() => localStorage.getItem("lang") || "en");
 
