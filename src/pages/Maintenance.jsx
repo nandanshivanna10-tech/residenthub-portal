@@ -2,10 +2,10 @@ import { useState } from "react";
 import { useLanguage } from "../context/LanguageContext";
 
 const initialRequests = [
-  { id: "#REQ-1049", category: "Plumbing", desc: "Severe water leakage in the master bedroom washroom pipe." },
-  { id: "#REQ-1042", category: "Electrical", desc: "Short circuit triggered in the main hallway circuit breaker." },
-  { id: "#REQ-1038", category: "Carpentry", desc: "Kitchen cabinet door hinge broken and needs replacement." },
-  { id: "#REQ-1021", category: "Appliance Repair", desc: "Community intercom buzzer volume too low, unable to hear." },
+  { id: "#REQ-1049", categoryKey: "plumbing", desc: "Severe water leakage in the master bedroom washroom pipe." },
+  { id: "#REQ-1042", categoryKey: "electrical", desc: "Short circuit triggered in the main hallway circuit breaker." },
+  { id: "#REQ-1038", categoryKey: "carpentry", desc: "Kitchen cabinet door hinge broken and needs replacement." },
+  { id: "#REQ-1021", categoryKey: "applianceRepair", desc: "Community intercom buzzer volume too low, unable to hear." },
 ];
 
 export default function Maintenance() {
@@ -45,7 +45,7 @@ export default function Maintenance() {
               {requests.map((r) => (
                 <tr key={r.id} className="border-t border-gray-100 dark:border-gray-800">
                   <td className="px-4 py-3 font-medium text-gray-800 dark:text-gray-100">{r.id}</td>
-                  <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{r.category}</td>
+                  <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{t(r.categoryKey)}</td>
                   <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{r.desc}</td>
                 </tr>
               ))}
@@ -64,11 +64,11 @@ export default function Maintenance() {
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("category")}</label>
           <select className="w-full mt-1 mb-3 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100">
             <option>{t("selectCategory")}</option>
-            <option>Plumbing</option>
-            <option>Electrical</option>
-            <option>Carpentry</option>
-            <option>Appliance Repair</option>
-            <option>General</option>
+            <option>{t("plumbing")}</option>
+            <option>{t("electrical")}</option>
+            <option>{t("carpentry")}</option>
+            <option>{t("applianceRepair")}</option>
+            <option>{t("general")}</option>
           </select>
 
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("description")}</label>
@@ -77,8 +77,10 @@ export default function Maintenance() {
             className="w-full mt-1 mb-3 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100"
           />
 
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("urgencyPriority")}</label>
-          <div className="flex gap-4 mt-2 mb-4 text-sm text-gray-600 dark:text-gray-300">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-4 mb-2">
+            {t("urgencyPriority")}
+          </label>
+          <div className="flex gap-4 mb-4 text-sm text-gray-600 dark:text-gray-300">
             {[t("low"), t("medium"), t("high")].map((p, i) => (
               <label key={p} className="flex items-center gap-1">
                 <input type="radio" name="priority" defaultChecked={i === 0} />

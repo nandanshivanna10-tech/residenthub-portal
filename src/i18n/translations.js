@@ -159,7 +159,12 @@ export const translations = {
     ttTournamentLabel: "TT Tournament",
     securityCommitteeLabel: "Security Committee",
     clubhouseTime: "5:30 PM • Clubhouse",
-  confRoomTime: "7:00 PM • Conf. Room",
+    confRoomTime: "7:00 PM • Conf. Room",
+    plumbing: "Plumbing", 
+    electrical: "Electrical",
+    carpentry: "Carpentry",
+    applianceRepair: "Appliance Repair",
+    general: "General", 
   },
   hi: {
     dashboard: "डैशबोर्ड",
@@ -322,5 +327,9 @@ export const translations = {
     securityCommitteeLabel: "सुरक्षा समिति",
     clubhouseTime: "शाम 5:30 बजे • क्लबहाउस",
     confRoomTime: "शाम 7:00 बजे • कॉन्फ. रूम",
+    plumbing: "प्लंबिंग",
+    carpentry: "बढ़ईगीरी", 
+    applianceRepair: "उपकरण मरम्मत", 
+    general: "सामान्य",
   },
 };
