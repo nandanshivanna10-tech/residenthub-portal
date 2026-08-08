@@ -20,7 +20,7 @@ export default function DashboardLayout() {
   return (
     <div className="flex">
       <Sidebar />
-      <div className="flex-1 min-h-screen bg-[#f8f9fb]">
+      <div className="flex-1 min-h-screen bg-[#f8f9fb] dark:bg-gray-950 transition-colors">
         <Topbar title={title} />
         <main className="p-8">
           <Outlet />
