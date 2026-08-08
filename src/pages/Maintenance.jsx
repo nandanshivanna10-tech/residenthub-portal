@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLanguage } from "../context/LanguageContext";
 
 const initialRequests = [
   { id: "#REQ-1049", category: "Plumbing", desc: "Severe water leakage in the master bedroom washroom pipe." },
@@ -8,43 +9,44 @@ const initialRequests = [
 ];
 
 export default function Maintenance() {
+  const { t } = useLanguage();
   const [showForm, setShowForm] = useState(false);
   const [requests] = useState(initialRequests);
 
   return (
     <div className="flex gap-6">
       <div className="flex-1">
-        <h2 className="text-xl font-semibold text-gray-900">Maintenance Requests</h2>
-        <p className="text-gray-500 mb-4">Raise and monitor support requests for your apartment</p>
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{t("maintenanceTitle")}</h2>
+        <p className="text-gray-500 dark:text-gray-400 mb-4">{t("maintenanceSubtitle")}</p>
 
         <div className="flex gap-3 mb-4">
           <input
-            placeholder="Search request..."
-            className="flex-1 px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 text-sm"
+            placeholder={t("searchRequest")}
+            className="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100"
           />
           <button
             onClick={() => setShowForm(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium"
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap"
           >
-            + New Request
+            {t("newRequest")}
           </button>
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-gray-500 text-left">
+            <thead className="bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 text-left">
               <tr>
-                <th className="px-4 py-3">ID</th>
-                <th className="px-4 py-3">Category</th>
-                <th className="px-4 py-3">Description</th>
+                <th className="px-4 py-3">{t("id")}</th>
+                <th className="px-4 py-3">{t("category")}</th>
+                <th className="px-4 py-3">{t("description")}</th>
               </tr>
             </thead>
             <tbody>
               {requests.map((r) => (
-                <tr key={r.id} className="border-t border-gray-100">
-                  <td className="px-4 py-3 font-medium text-gray-800">{r.id}</td>
-                  <td className="px-4 py-3">{r.category}</td>
-                  <td className="px-4 py-3 text-gray-500">{r.desc}</td>
+                <tr key={r.id} className="border-t border-gray-100 dark:border-gray-800">
+                  <td className="px-4 py-3 font-medium text-gray-800 dark:text-gray-100">{r.id}</td>
+                  <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{r.category}</td>
+                  <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{r.desc}</td>
                 </tr>
               ))}
             </tbody>
@@ -53,41 +55,33 @@ export default function Maintenance() {
       </div>
 
       {showForm && (
-        <div className="w-80 bg-white rounded-xl border border-gray-200 p-5 h-fit">
+        <div className="w-80 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-5 h-fit transition-colors">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="font-semibold text-gray-900">Submit New Request</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100">{t("submitNewRequest")}</h3>
             <button onClick={() => setShowForm(false)} className="text-gray-400">✕</button>
           </div>
 
-          <label className="text-sm font-medium text-gray-700">Category</label>
-          <select className="w-full mt-1 mb-3 px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 text-sm">
-            <option>Select Category</option>
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("category")}</label>
+          <select className="w-full mt-1 mb-3 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100">
+            <option>{t("selectCategory")}</option>
             <option>Plumbing</option>
             <option>Electrical</option>
             <option>Carpentry</option>
             <option>Appliance Repair</option>
             <option>General</option>
-
           </select>
 
-          <label className="text-sm font-medium text-gray-700">Description</label>
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("description")}</label>
           <textarea
             rows={4}
-            placeholder="Provide specific details of the issue..."
-            className="w-full mt-1 mb-3 px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 text-sm"
+            className="w-full mt-1 mb-3 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100"
           />
 
-          <label className="text-sm font-medium text-gray-700">Upload Image Evidence (Optional)</label>
-          <div className="mt-1 mb-3 border-2 border-dashed border-gray-200 rounded-lg py-6 text-center text-sm text-blue-600 cursor-pointer">
-            Click to upload photo
-            <p className="text-xs text-gray-400 mt-1">PNG, JPG up to 5MB</p>
-          </div>
-
-          <label className="text-sm font-medium text-gray-700">Select Urgency Priority</label>
-          <div className="flex gap-4 mt-2 mb-4 text-sm text-gray-600">
-            {["Low", "Medium", "High"].map((p) => (
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("urgencyPriority")}</label>
+          <div className="flex gap-4 mt-2 mb-4 text-sm text-gray-600 dark:text-gray-300">
+            {[t("low"), t("medium"), t("high")].map((p, i) => (
               <label key={p} className="flex items-center gap-1">
-                <input type="radio" name="priority" defaultChecked={p === "Low"} />
+                <input type="radio" name="priority" defaultChecked={i === 0} />
                 {p}
               </label>
             ))}
@@ -95,13 +89,13 @@ export default function Maintenance() {
 
           <div className="flex gap-2">
             <button className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium">
-              Submit Request
+              {t("submitRequest")}
             </button>
             <button
               onClick={() => setShowForm(false)}
-              className="px-4 py-2 rounded-lg text-sm font-medium border border-gray-200 text-gray-600"
+              className="px-4 py-2 rounded-lg text-sm font-medium border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300"
             >
-              Cancel
+              {t("cancel")}
             </button>
           </div>
         </div>
