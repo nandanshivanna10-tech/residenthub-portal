@@ -9,6 +9,8 @@ export const languageList = [
   { code: "kn", label: "ಕನ್ನಡ" },
   { code: "ta", label: "தமிழ்" },
   { code: "mr", label: "मराठी" },
+  { code: "te", label: "తెలుగు" },
+  { code: "ml", label: "മലയാളം" },
 ];
 
 export function LanguageProvider({ children }) {
