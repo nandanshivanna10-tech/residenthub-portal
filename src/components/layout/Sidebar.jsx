@@ -3,6 +3,7 @@ import {
   LayoutGrid, Wrench, Users, Megaphone, Wallet, Calendar, BookUser, User, Building2, Lock,
 } from "lucide-react";
 import { useLanguage } from "../../context/LanguageContext";
+import logo from "../../assets/logo.jpeg";
 
 export default function Sidebar() {
   const { t } = useLanguage();
@@ -20,7 +21,11 @@ export default function Sidebar() {
 
   return (
     <aside className="w-60 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 flex flex-col h-screen sticky top-0 transition-colors">
-      <div className="flex items-center gap-2 px-5 py-5">
+      <div className="flex items-center gap-2 px-5 pt-5 pb-2">
+        <img src={logo} alt="Code Morphicx" className="w-10 h-10 object-contain" />
+      </div>
+
+      <div className="flex items-center gap-2 px-5 pb-5">
         <div className="bg-blue-600 text-white rounded-lg p-2">
           <Building2 size={20} />
         </div>

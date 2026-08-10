@@ -8,15 +8,15 @@ export default function DashboardLayout() {
   const { t } = useLanguage();
 
   const titleKeys = {
-   "/dashboard": "dashboard",
-   "/maintenance": "maintenanceTitle",
-   "/visitors": "visitors",
-   "/announcements": "announcements",
-   "/bills": "bills",
-   "/events": "events",
-   "/directory": "directory",
-   "/profile": "profile",
- };
+    "/dashboard": "dashboard",
+    "/maintenance": "maintenanceTitle",
+    "/visitors": "visitors",
+    "/announcements": "announcements",
+    "/bills": "bills",
+    "/events": "events",
+    "/directory": "directory",
+    "/profile": "profile",
+  };
 
   const title = t(titleKeys[location.pathname] || "dashboard");
 
