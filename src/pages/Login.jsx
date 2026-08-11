@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Building2, Eye, EyeOff } from "lucide-react";
+import { Building2, Eye, EyeOff, Sun, Moon } from "lucide-react";
 import logo from "../assets/logo.jpeg";
+import { useTheme } from "../context/ThemeContext";
 
 export default function Login() {
   const [role, setRole] = useState("Resident");
   const [showPassword, setShowPassword] = useState(false);
+  const { darkMode, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   const handleSubmit = (e) => {
@@ -14,11 +16,19 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen bg-white dark:bg-gray-950 transition-colors">
-      <div className="w-full md:w-1/2 flex flex-col px-8 pt-6">
-        <img src={logo} alt="Code Morphicx" className="w-14 h-14 object-contain mb-4" />
+    <div className="flex min-h-screen bg-white dark:bg-gray-950 transition-colors relative">
+      <button
+        onClick={toggleTheme}
+        className="absolute top-6 right-6 z-10 p-2.5 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition"
+        title="Toggle dark mode"
+      >
+        {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+      </button>
 
-        <div className="flex-1 flex flex-col items-center justify-center -mt-14">
+      <div className="w-full md:w-1/2 flex flex-col px-8 pt-6">
+        <img src={logo} alt="Code Morphicx" className="w-24 h-24 object-contain mb-2" />
+
+        <div className="flex-1 flex flex-col items-center justify-center -mt-16">
           <div className="bg-blue-600 text-white rounded-xl p-3 mb-4">
             <Building2 size={28} />
           </div>
