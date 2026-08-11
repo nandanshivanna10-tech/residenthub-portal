@@ -32,8 +32,15 @@ export default function Login() {
           <div className="bg-blue-600 text-white rounded-xl p-3 mb-4">
             <Building2 size={28} />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Welcome to ResidentHub</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1 mb-8 text-center">
+
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 text-center">
+            Welcome to ResidentHub
+          </h1>
+          <p className="text-sm font-normal text-gray-500 dark:text-gray-400 -mt-0.5">
+            by Code Morphicx
+          </p>
+
+          <p className="text-gray-500 dark:text-gray-400 mt-3 mb-8 text-center">
             Manage your apartment, bills, & visitors in one place
           </p>
 

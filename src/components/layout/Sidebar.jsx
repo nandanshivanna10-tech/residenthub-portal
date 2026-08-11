@@ -25,13 +25,18 @@ export default function Sidebar() {
         <img src={logo} alt="Code Morphicx" className="w-16 h-16 object-contain" />
       </div>
 
-      <div className="flex items-center gap-2 px-5 pb-5">
+      <div className="flex items-start gap-2 px-5 pb-5">
         <div className="bg-blue-600 text-white rounded-lg p-2">
           <Building2 size={20} />
         </div>
         <div>
-          <p className="font-semibold text-gray-900 dark:text-gray-100 leading-tight">ResidentHub</p>
-          <p className="text-xs text-gray-400 dark:text-gray-500 tracking-wide">COMMUNITY</p>
+          <p className="font-semibold text-gray-900 dark:text-gray-100 leading-tight text-sm">
+            ResidentHub
+          </p>
+          <p className="text-xs font-normal text-gray-500 dark:text-gray-400 leading-tight">
+            by Code Morphicx
+          </p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 tracking-wide mt-0.5">COMMUNITY</p>
         </div>
       </div>
 
