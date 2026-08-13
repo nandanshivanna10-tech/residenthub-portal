@@ -1,6 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import Login from "../pages/Login";
 import DashboardLayout from "../components/layout/DashboardLayout";
+import ProtectedRoute from "./ProtectedRoute";
 import Dashboard from "../pages/Dashboard";
 import Maintenance from "../pages/Maintenance";
 import Visitors from "../pages/Visitors";
@@ -14,7 +15,13 @@ export default function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Login />} />
-      <Route element={<DashboardLayout />}>
+      <Route
+        element={
+          <ProtectedRoute>
+            <DashboardLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/maintenance" element={<Maintenance />} />
         <Route path="/visitors" element={<Visitors />} />

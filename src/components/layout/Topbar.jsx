@@ -1,15 +1,24 @@
-import { Search, Bell, Sun, Moon, Globe, Wallet } from "lucide-react";
+import { Search, Bell, Sun, Moon, Globe, Wallet, LogOut } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useTheme } from "../../context/ThemeContext";
 import { useLanguage, languageList } from "../../context/LanguageContext";
 import { useCurrency, currencyList } from "../../context/CurrencyContext";
+import { useAuth } from "../../context/AuthContext";
 
 export default function Topbar({ title }) {
   const { darkMode, toggleTheme } = useTheme();
   const { lang, changeLanguage, t } = useLanguage();
   const { currency, changeCurrency, currencyLabel } = useCurrency();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [showCurrencyMenu, setShowCurrencyMenu] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
 
   return (
     <header className="flex items-center justify-between px-8 py-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 transition-colors">
@@ -104,10 +113,17 @@ export default function Topbar({ title }) {
           />
           <div>
             <p className="text-sm font-medium text-gray-800 dark:text-gray-100 leading-tight">
-              Rahul Sharma
+              {user?.fullName || "Resident"}
             </p>
             <p className="text-xs text-gray-400 dark:text-gray-500">{t("residentAccount")}</p>
           </div>
+          <button
+            onClick={handleLogout}
+            title="Logout"
+            className="ml-1 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-red-500 transition"
+          >
+            <LogOut size={18} />
+          </button>
         </div>
       </div>
     </header>

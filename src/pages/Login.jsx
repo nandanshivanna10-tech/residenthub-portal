@@ -3,16 +3,31 @@ import { useNavigate } from "react-router-dom";
 import { Building2, Eye, EyeOff, Sun, Moon } from "lucide-react";
 import logo from "../assets/logo.jpeg";
 import { useTheme } from "../context/ThemeContext";
+import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
   const [role, setRole] = useState("Resident");
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const { darkMode, toggleTheme } = useTheme();
+  const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    navigate("/dashboard");
+    setError("");
+    setSubmitting(true);
+    try {
+      await login(email, password);
+      navigate("/dashboard");
+    } catch (err) {
+      setError(err.response?.data?.message || "Login failed. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -62,6 +77,12 @@ export default function Login() {
               ))}
             </div>
 
+            {error && (
+              <div className="mb-4 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-sm">
+                {error}
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -69,7 +90,9 @@ export default function Login() {
                 </label>
                 <input
                   type="text"
-                  defaultValue="rahul.sharma@gmail.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="rahul.sharma@gmail.com"
                   className="mt-1 w-full px-3 py-2.5 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-200"
                 />
               </div>
@@ -84,7 +107,9 @@ export default function Login() {
                 <div className="relative mt-1">
                   <input
                     type={showPassword ? "text" : "password"}
-                    defaultValue="password123"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your password"
                     className="w-full px-3 py-2.5 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-200"
                   />
                   <button
@@ -99,9 +124,10 @@ export default function Login() {
 
               <button
                 type="submit"
-                className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700 transition"
+                disabled={submitting}
+                className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-60"
               >
-                Sign In
+                {submitting ? "Signing In..." : "Sign In"}
               </button>
 
               <p className="text-center text-sm text-gray-500 dark:text-gray-400">
