@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLanguage } from "../context/LanguageContext";
 import api from "../api/axios";
+import holiImg from "../assets/events/holi.jpg";
 
 const categoryColorMap = {
   Cultural: "bg-orange-100 dark:bg-orange-950 text-orange-600 dark:text-orange-400",
@@ -9,7 +10,14 @@ const categoryColorMap = {
   Social: "bg-purple-100 dark:bg-purple-950 text-purple-600 dark:text-purple-400",
 };
 
-const fallbackImage = "https://images.unsplash.com/photo-1511578314322-379afb476865?w=500";
+const fallbackImageMap = {
+  Cultural: "https://images.pexels.com/photos/1387037/pexels-photo-1387037.jpeg?w=500&auto=compress",
+  "Health & Wellness": "https://images.pexels.com/photos/863926/pexels-photo-863926.jpeg?w=500&auto=compress",
+  Sports: "https://images.pexels.com/photos/163444/sport-treadmill-tor-route-163444.jpeg?w=500&auto=compress",
+  Social: "https://images.pexels.com/photos/1105666/pexels-photo-1105666.jpeg?w=500&auto=compress",
+};
+
+const defaultFallback = "https://images.pexels.com/photos/1105666/pexels-photo-1105666.jpeg?w=500&auto=compress";
 
 export default function Events() {
   const { t } = useLanguage();
@@ -105,11 +113,26 @@ export default function Events() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           {events.map((e) => (
-            <div key={e._id} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors">
-              <img src={e.imageUrl || fallbackImage} alt={e.title} className="w-full h-40 object-cover" />
+            <div
+              key={e._id}
+              className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors"
+            >
+              <img
+                src={e.imageUrl || fallbackImageMap[e.category] || defaultFallback}
+                alt={e.title}
+                className="w-full h-40 object-cover bg-gray-100 dark:bg-gray-800"
+                onError={(ev) => {
+                  ev.target.onerror = null;
+                  ev.target.src = defaultFallback;
+                }}
+              />
               <div className="p-4">
                 <div className="flex justify-between items-center mb-2">
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${categoryColorMap[e.category] || categoryColorMap.Social}`}>
+                  <span
+                    className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                      categoryColorMap[e.category] || categoryColorMap.Social
+                    }`}
+                  >
                     {e.category}
                   </span>
                   <span className="text-xs text-gray-400 dark:text-gray-500">{e.organizer}</span>
