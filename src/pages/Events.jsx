@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLanguage } from "../context/LanguageContext";
 import api from "../api/axios";
-import holiImg from "../assets/events/holi.jpg";
+import holiImg from "../assets/events/Holi.jpg";
 
 const categoryColorMap = {
   Cultural: "bg-orange-100 dark:bg-orange-950 text-orange-600 dark:text-orange-400",
