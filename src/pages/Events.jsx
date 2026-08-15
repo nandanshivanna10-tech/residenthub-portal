@@ -1,36 +1,23 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLanguage } from "../context/LanguageContext";
+import api from "../api/axios";
 
-const allEvents = [
-  {
-    category: "Cultural",
-    catColor: "bg-orange-100 dark:bg-orange-950 text-orange-600 dark:text-orange-400",
-    org: "Organized by Cultural Society Board",
-    title: "Holi Celebration 2026",
-    desc: "Join us for the ultimate community festival of colors! Includes organic color distribution, sweet stalls, cultural dances, and live DJ performance.",
-    date: "Mar 15, 2026 • 4:00 PM",
-    location: "Clubhouse Lawn",
-    going: "+120 going",
-    registered: false,
-    image: "https://images.unsplash.com/photo-1615488023410-fb03deb28e37?w=500",
-  },
-  {
-    category: "Health & Wellness",
-    catColor: "bg-green-100 dark:bg-green-950 text-green-600 dark:text-green-400",
-    org: "Health Committee",
-    title: "Yoga & Wellness Workshop",
-    desc: "A rejuvenating morning of deep breathing, therapeutic stretching, and mindfulness meditation led by certified professional instructors.",
-    date: "Feb 20, 2026 • 7:00 AM",
-    location: "Terrace Garden",
-    going: "+38 going",
-    registered: true,
-    image: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=500",
-  },
-];
+const categoryColorMap = {
+  Cultural: "bg-orange-100 dark:bg-orange-950 text-orange-600 dark:text-orange-400",
+  "Health & Wellness": "bg-green-100 dark:bg-green-950 text-green-600 dark:text-green-400",
+  Sports: "bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400",
+  Social: "bg-purple-100 dark:bg-purple-950 text-purple-600 dark:text-purple-400",
+};
+
+const fallbackImage = "https://images.unsplash.com/photo-1511578314322-379afb476865?w=500";
 
 export default function Events() {
   const { t } = useLanguage();
   const [active, setActive] = useState("All");
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [rsvpingId, setRsvpingId] = useState(null);
 
   const filters = [
     { key: "All", label: t("all") },
@@ -38,6 +25,45 @@ export default function Events() {
     { key: "Past", label: t("past") },
     { key: "My Events", label: t("myEvents") },
   ];
+
+  const fetchEvents = async (filterKey) => {
+    try {
+      setLoading(true);
+      const filterParam = filterKey !== "All" ? `?filter=${encodeURIComponent(filterKey)}` : "";
+      const res = await api.get(`/events${filterParam}`);
+      setEvents(res.data);
+    } catch (err) {
+      setError("Failed to load events");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchEvents(active);
+  }, [active]);
+
+  const handleRsvp = async (id) => {
+    setRsvpingId(id);
+    try {
+      await api.patch(`/events/${id}/rsvp`);
+      fetchEvents(active);
+    } catch (err) {
+      setError("Failed to update RSVP");
+    } finally {
+      setRsvpingId(null);
+    }
+  };
+
+  const formatEventDate = (dateStr) => {
+    return new Date(dateStr).toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  };
 
   return (
     <div>
@@ -66,37 +92,51 @@ export default function Events() {
         />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        {allEvents.map((e, i) => (
-          <div key={i} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors">
-            <img src={e.image} alt={e.title} className="w-full h-40 object-cover" />
-            <div className="p-4">
-              <div className="flex justify-between items-center mb-2">
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${e.catColor}`}>
-                  {e.category}
-                </span>
-                <span className="text-xs text-gray-400 dark:text-gray-500">{e.org}</span>
+      {error && (
+        <div className="mb-4 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-sm">
+          {error}
+        </div>
+      )}
+
+      {loading ? (
+        <p className="text-sm text-gray-400 dark:text-gray-500">Loading...</p>
+      ) : events.length === 0 ? (
+        <p className="text-sm text-gray-400 dark:text-gray-500">No events found</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          {events.map((e) => (
+            <div key={e._id} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors">
+              <img src={e.imageUrl || fallbackImage} alt={e.title} className="w-full h-40 object-cover" />
+              <div className="p-4">
+                <div className="flex justify-between items-center mb-2">
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${categoryColorMap[e.category] || categoryColorMap.Social}`}>
+                    {e.category}
+                  </span>
+                  <span className="text-xs text-gray-400 dark:text-gray-500">{e.organizer}</span>
+                </div>
+                <p className="font-semibold text-gray-900 dark:text-gray-100 mb-1">{e.title}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{e.description}</p>
+                <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 mb-3">
+                  <span>{formatEventDate(e.date)}</span>
+                  <span>+{e.attendeeCount || 0} going</span>
+                </div>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">{e.location}</p>
+                <button
+                  onClick={() => handleRsvp(e._id)}
+                  disabled={rsvpingId === e._id}
+                  className={`w-full py-2 rounded-lg text-sm font-medium disabled:opacity-60 ${
+                    e.isRegistered
+                      ? "bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400"
+                      : "bg-blue-600 text-white"
+                  }`}
+                >
+                  {rsvpingId === e._id ? "..." : e.isRegistered ? t("registeredBtn") : t("rsvpRegister")}
+                </button>
               </div>
-              <p className="font-semibold text-gray-900 dark:text-gray-100 mb-1">{e.title}</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{e.desc}</p>
-              <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 mb-3">
-                <span>{e.date}</span>
-                <span>{e.going}</span>
-              </div>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">{e.location}</p>
-              <button
-                className={`w-full py-2 rounded-lg text-sm font-medium ${
-                  e.registered
-                    ? "bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400"
-                    : "bg-blue-600 text-white"
-                }`}
-              >
-                {e.registered ? t("registeredBtn") : t("rsvpRegister")}
-              </button>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
