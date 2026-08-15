@@ -1,17 +1,60 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLanguage } from "../context/LanguageContext";
+import api from "../api/axios";
 
-const initialRequests = [
-  { id: "#REQ-1049", categoryKey: "plumbing", desc: "Severe water leakage in the master bedroom washroom pipe." },
-  { id: "#REQ-1042", categoryKey: "electrical", desc: "Short circuit triggered in the main hallway circuit breaker." },
-  { id: "#REQ-1038", categoryKey: "carpentry", desc: "Kitchen cabinet door hinge broken and needs replacement." },
-  { id: "#REQ-1021", categoryKey: "applianceRepair", desc: "Community intercom buzzer volume too low, unable to hear." },
-];
+const categoryKeyMap = {
+  Plumbing: "plumbing",
+  Electrical: "electrical",
+  Carpentry: "carpentry",
+  "Appliance Repair": "applianceRepair",
+  General: "general",
+};
 
 export default function Maintenance() {
   const { t } = useLanguage();
   const [showForm, setShowForm] = useState(false);
-  const [requests] = useState(initialRequests);
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const [category, setCategory] = useState("");
+  const [description, setDescription] = useState("");
+  const [priority, setPriority] = useState("Low");
+  const [submitting, setSubmitting] = useState(false);
+
+  const fetchRequests = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get("/maintenance/my-requests");
+      setRequests(res.data);
+    } catch (err) {
+      setError("Failed to load maintenance requests");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRequests();
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!category || !description) return;
+    setSubmitting(true);
+    try {
+      await api.post("/maintenance", { category, description, priority });
+      setCategory("");
+      setDescription("");
+      setPriority("Low");
+      setShowForm(false);
+      fetchRequests();
+    } catch (err) {
+      setError("Failed to submit request");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="flex gap-6">
@@ -32,6 +75,12 @@ export default function Maintenance() {
           </button>
         </div>
 
+        {error && (
+          <div className="mb-4 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-sm">
+            {error}
+          </div>
+        )}
+
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 text-left">
@@ -39,16 +88,40 @@ export default function Maintenance() {
                 <th className="px-4 py-3">{t("id")}</th>
                 <th className="px-4 py-3">{t("category")}</th>
                 <th className="px-4 py-3">{t("description")}</th>
+                <th className="px-4 py-3">{t("status")}</th>
               </tr>
             </thead>
             <tbody>
-              {requests.map((r) => (
-                <tr key={r.id} className="border-t border-gray-100 dark:border-gray-800">
-                  <td className="px-4 py-3 font-medium text-gray-800 dark:text-gray-100">{r.id}</td>
-                  <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{t(r.categoryKey)}</td>
-                  <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{r.desc}</td>
+              {loading ? (
+                <tr>
+                  <td colSpan={4} className="px-4 py-6 text-center text-gray-400 dark:text-gray-500">
+                    Loading...
+                  </td>
                 </tr>
-              ))}
+              ) : requests.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-4 py-6 text-center text-gray-400 dark:text-gray-500">
+                    No maintenance requests yet
+                  </td>
+                </tr>
+              ) : (
+                requests.map((r) => (
+                  <tr key={r._id} className="border-t border-gray-100 dark:border-gray-800">
+                    <td className="px-4 py-3 font-medium text-gray-800 dark:text-gray-100">
+                      #{r._id.slice(-6).toUpperCase()}
+                    </td>
+                    <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                      {t(categoryKeyMap[r.category] || r.category)}
+                    </td>
+                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{r.description}</td>
+                    <td className="px-4 py-3">
+                      <span className="bg-yellow-100 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-400 text-xs px-2 py-0.5 rounded-full font-medium">
+                        {r.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -61,45 +134,67 @@ export default function Maintenance() {
             <button onClick={() => setShowForm(false)} className="text-gray-400">✕</button>
           </div>
 
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("category")}</label>
-          <select className="w-full mt-1 mb-3 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100">
-            <option>{t("selectCategory")}</option>
-            <option>{t("plumbing")}</option>
-            <option>{t("electrical")}</option>
-            <option>{t("carpentry")}</option>
-            <option>{t("applianceRepair")}</option>
-            <option>{t("general")}</option>
-          </select>
-
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("description")}</label>
-          <textarea
-            rows={4}
-            className="w-full mt-1 mb-3 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100"
-          />
-
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-4 mb-2">
-            {t("urgencyPriority")}
-          </label>
-          <div className="flex gap-4 mb-4 text-sm text-gray-600 dark:text-gray-300">
-            {[t("low"), t("medium"), t("high")].map((p, i) => (
-              <label key={p} className="flex items-center gap-1">
-                <input type="radio" name="priority" defaultChecked={i === 0} />
-                {p}
-              </label>
-            ))}
-          </div>
-
-          <div className="flex gap-2">
-            <button className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium">
-              {t("submitRequest")}
-            </button>
-            <button
-              onClick={() => setShowForm(false)}
-              className="px-4 py-2 rounded-lg text-sm font-medium border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300"
+          <form onSubmit={handleSubmit}>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("category")}</label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="w-full mt-1 mb-3 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100"
             >
-              {t("cancel")}
-            </button>
-          </div>
+              <option value="">{t("selectCategory")}</option>
+              <option value="Plumbing">{t("plumbing")}</option>
+              <option value="Electrical">{t("electrical")}</option>
+              <option value="Carpentry">{t("carpentry")}</option>
+              <option value="Appliance Repair">{t("applianceRepair")}</option>
+              <option value="General">{t("general")}</option>
+            </select>
+
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("description")}</label>
+            <textarea
+              rows={4}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full mt-1 mb-3 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100"
+            />
+
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-4 mb-2">
+              {t("urgencyPriority")}
+            </label>
+            <div className="flex gap-4 mb-4 text-sm text-gray-600 dark:text-gray-300">
+              {[
+                { label: t("low"), value: "Low" },
+                { label: t("medium"), value: "Medium" },
+                { label: t("high"), value: "High" },
+              ].map((p) => (
+                <label key={p.value} className="flex items-center gap-1">
+                  <input
+                    type="radio"
+                    name="priority"
+                    checked={priority === p.value}
+                    onChange={() => setPriority(p.value)}
+                  />
+                  {p.label}
+                </label>
+              ))}
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                type="submit"
+                disabled={submitting}
+                className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium disabled:opacity-60"
+              >
+                {submitting ? "..." : t("submitRequest")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowForm(false)}
+                className="px-4 py-2 rounded-lg text-sm font-medium border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300"
+              >
+                {t("cancel")}
+              </button>
+            </div>
+          </form>
         </div>
       )}
     </div>
