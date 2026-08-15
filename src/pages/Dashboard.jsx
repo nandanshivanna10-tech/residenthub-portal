@@ -19,39 +19,25 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        const [maintenanceRes, expectedVisitorsRes, eventsRes, pendingBillsRes, announcementsRes] =
-          await Promise.all([
-            api.get("/maintenance/my-requests"),
-            api.get("/visitors/expected"),
-            api.get("/events?filter=Upcoming"),
-            api.get("/bills/pending"),
-            api.get("/announcements/recent"),
-          ]);
+  const fetchDashboardData = async () => {
+    try {
+      const res = await api.get("/dashboard");
+      setPendingMaintenance(res.data.pendingMaintenance);
+      setVisitorsToday(res.data.visitorsToday);
+      setUpcomingEventsCount(res.data.upcomingEventsCount);
+      setUpcomingEvents(res.data.upcomingEvents);
+      setBillsDue(res.data.billsDueCount);
+      setTotalDueAmount(res.data.totalDueAmount);
+      setRecentAnnouncements(res.data.recentAnnouncements);
+    } catch (err) {
+      console.error("Failed to load dashboard data", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        const pending = maintenanceRes.data.filter((m) => m.status !== "Completed").length;
-        setPendingMaintenance(pending);
-
-        setVisitorsToday(expectedVisitorsRes.data.length);
-
-        setUpcomingEventsCount(eventsRes.data.length);
-        setUpcomingEvents(eventsRes.data.slice(0, 2));
-
-        setBillsDue(pendingBillsRes.data.length);
-        const totalDue = pendingBillsRes.data.reduce((sum, b) => sum + b.amount, 0);
-        setTotalDueAmount(totalDue);
-
-        setRecentAnnouncements(announcementsRes.data);
-      } catch (err) {
-        console.error("Failed to load dashboard data", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDashboardData();
-  }, []);
+  fetchDashboardData();
+}, []);
 
   const tagColorMap = {
     Alert: "bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400",
