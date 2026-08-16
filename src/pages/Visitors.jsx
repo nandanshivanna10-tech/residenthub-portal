@@ -16,6 +16,14 @@ export default function Visitors() {
   const [vehicleNumber, setVehicleNumber] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  const [editingVisitor, setEditingVisitor] = useState(null);
+  const [editName, setEditName] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [editPurpose, setEditPurpose] = useState("");
+  const [editExpectedAt, setEditExpectedAt] = useState("");
+  const [editVehicleNumber, setEditVehicleNumber] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -61,6 +69,40 @@ export default function Visitors() {
       fetchData();
     } catch (err) {
       setError("Failed to revoke pass");
+    }
+  };
+
+  const openEditModal = (visitor) => {
+    setEditingVisitor(visitor);
+    setEditName(visitor.name || "");
+    setEditPhone(visitor.phone || "");
+    setEditPurpose(visitor.purpose || "");
+    setEditExpectedAt(visitor.expectedAt ? visitor.expectedAt.slice(0, 16) : "");
+    setEditVehicleNumber(visitor.vehicleNumber || "");
+  };
+
+  const closeEditModal = () => {
+    setEditingVisitor(null);
+  };
+
+  const handleEditSave = async (e) => {
+    e.preventDefault();
+    if (!editingVisitor) return;
+    setSavingEdit(true);
+    try {
+      await api.put(`/visitors/${editingVisitor._id}`, {
+        name: editName,
+        phone: editPhone,
+        purpose: editPurpose,
+        expectedAt: editExpectedAt,
+        vehicleNumber: editVehicleNumber,
+      });
+      closeEditModal();
+      fetchData();
+    } catch (err) {
+      setError("Failed to update visitor");
+    } finally {
+      setSavingEdit(false);
     }
   };
 
@@ -121,7 +163,10 @@ export default function Visitors() {
                       >
                         {t("revoke")}
                       </button>
-                      <button className="flex-1 bg-blue-600 text-white py-1.5 rounded-lg text-xs font-medium">
+                      <button
+                        onClick={() => openEditModal(v)}
+                        className="flex-1 bg-blue-600 text-white py-1.5 rounded-lg text-xs font-medium"
+                      >
                         {t("editPass")}
                       </button>
                     </div>
@@ -228,6 +273,78 @@ export default function Visitors() {
           </form>
         </div>
       </div>
+
+      {editingVisitor && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-5 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100">{t("editPass")}</h3>
+              <button onClick={closeEditModal} className="text-gray-400">✕</button>
+            </div>
+
+            <form onSubmit={handleEditSave} className="space-y-3">
+              <div>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("visitorFullName")}</label>
+                <input
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("phoneNumber")}</label>
+                <input
+                  value={editPhone}
+                  onChange={(e) => setEditPhone(e.target.value)}
+                  className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("visitPurpose")}</label>
+                <input
+                  value={editPurpose}
+                  onChange={(e) => setEditPurpose(e.target.value)}
+                  className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("expectedDateTime")}</label>
+                <input
+                  type="datetime-local"
+                  value={editExpectedAt}
+                  onChange={(e) => setEditExpectedAt(e.target.value)}
+                  className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("vehicleNumberOptional")}</label>
+                <input
+                  value={editVehicleNumber}
+                  onChange={(e) => setEditVehicleNumber(e.target.value)}
+                  className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="submit"
+                  disabled={savingEdit}
+                  className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium disabled:opacity-60"
+                >
+                  {savingEdit ? "..." : t("saveChanges")}
+                </button>
+                <button
+                  type="button"
+                  onClick={closeEditModal}
+                  className="px-4 py-2 rounded-lg text-sm font-medium border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300"
+                >
+                  {t("cancel")}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
