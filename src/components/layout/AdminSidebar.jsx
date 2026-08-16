@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 import {
-  LayoutGrid, Wrench, Users, Megaphone, Wallet, Calendar, BookUser, Building2, Bell,
+  LayoutGrid, Wrench, Users, Megaphone, Wallet, Calendar, BookUser, Building2, Bell, User,
 } from "lucide-react";
 import logo from "../../assets/logo.jpeg";
 
@@ -12,6 +12,7 @@ const navItems = [
   { name: "Bills", path: "/admin/bills", icon: Wallet },
   { name: "Events", path: "/admin/events", icon: Calendar },
   { name: "Directory", path: "/admin/directory", icon: BookUser },
+  { name: "Profile", path: "/admin/profile", icon: User },
 ];
 
 export default function AdminSidebar() {

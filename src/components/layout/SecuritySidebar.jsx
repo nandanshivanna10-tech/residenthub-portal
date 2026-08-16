@@ -1,11 +1,12 @@
 import { NavLink } from "react-router-dom";
-import { LayoutGrid, Users, BookUser, Building2, ShieldCheck } from "lucide-react";
+import { LayoutGrid, Users, BookUser, Building2, ShieldCheck, User } from "lucide-react";
 import logo from "../../assets/logo.jpeg";
 
 const navItems = [
   { name: "Dashboard", path: "/security/dashboard", icon: LayoutGrid },
   { name: "Visitors", path: "/security/visitors", icon: Users },
   { name: "Directory", path: "/security/directory", icon: BookUser },
+  { name: "Profile", path: "/security/profile", icon: User },
 ];
 
 export default function SecuritySidebar() {

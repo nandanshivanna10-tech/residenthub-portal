@@ -6,6 +6,7 @@ const titles = {
   "/security/dashboard": "Security Dashboard",
   "/security/visitors": "Visitor Check-In",
   "/security/directory": "Directory",
+  "/security/profile": "My Profile",
 };
 
 export default function SecurityLayout() {

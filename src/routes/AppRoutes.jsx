@@ -21,10 +21,12 @@ import AdminAnnouncements from "../pages/admin/AdminAnnouncements";
 import AdminBills from "../pages/admin/AdminBills";
 import AdminEvents from "../pages/admin/AdminEvents";
 import AdminDirectory from "../pages/admin/AdminDirectory";
+import AdminProfile from "../pages/admin/AdminProfile";
 
 import SecurityDashboard from "../pages/security/SecurityDashboard";
 import SecurityVisitors from "../pages/security/SecurityVisitors";
 import SecurityDirectory from "../pages/security/SecurityDirectory";
+import SecurityProfile from "../pages/security/SecurityProfile";
 
 export default function AppRoutes() {
   return (
@@ -62,6 +64,7 @@ export default function AppRoutes() {
         <Route path="/admin/bills" element={<AdminBills />} />
         <Route path="/admin/events" element={<AdminEvents />} />
         <Route path="/admin/directory" element={<AdminDirectory />} />
+        <Route path="/admin/profile" element={<AdminProfile />} />
       </Route>
 
       <Route
@@ -74,6 +77,7 @@ export default function AppRoutes() {
         <Route path="/security/dashboard" element={<SecurityDashboard />} />
         <Route path="/security/visitors" element={<SecurityVisitors />} />
         <Route path="/security/directory" element={<SecurityDirectory />} />
+        <Route path="/security/profile" element={<SecurityProfile />} />
       </Route>
     </Routes>
   );
