@@ -13,7 +13,7 @@ export default function Login() {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const { darkMode, toggleTheme } = useTheme();
-  const { login } = useAuth();
+  const { login, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -21,8 +21,23 @@ export default function Login() {
     setError("");
     setSubmitting(true);
     try {
-      await login(email, password);
-      navigate("/dashboard");
+      const loggedInUser = await login(email, password);
+
+      const expectedRole = role.toLowerCase();
+      if (loggedInUser.role !== expectedRole) {
+        logout();
+        setError(`This account is not registered as ${role}. Please select the correct tab.`);
+        setSubmitting(false);
+        return;
+      }
+
+      if (loggedInUser.role === "admin") {
+        navigate("/admin/dashboard");
+      } else if (loggedInUser.role === "security") {
+        navigate("/security/dashboard");
+      } else {
+        navigate("/dashboard");
+      }
     } catch (err) {
       setError(err.response?.data?.message || "Login failed. Please try again.");
     } finally {
