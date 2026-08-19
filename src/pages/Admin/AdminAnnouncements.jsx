@@ -23,6 +23,7 @@ export default function AdminAnnouncements() {
   const [description, setDescription] = useState("");
   const [postedBy, setPostedBy] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
 
   const fetchAnnouncements = async () => {
     try {
@@ -51,6 +52,8 @@ export default function AdminAnnouncements() {
 
   const openCreateForm = () => {
     resetForm();
+    setError("");
+    setSuccess("");
     setShowForm(true);
   };
 
@@ -60,6 +63,8 @@ export default function AdminAnnouncements() {
     setTitle(a.title);
     setDescription(a.description);
     setPostedBy(a.postedBy);
+    setError("");
+    setSuccess("");
     setShowForm(true);
   };
 
@@ -80,6 +85,7 @@ export default function AdminAnnouncements() {
       resetForm();
       fetchAnnouncements();
     } catch (err) {
+      console.error("Save announcement error:", err.response?.data || err.message);
       setError(err.response?.data?.message || "Failed to save announcement");
     } finally {
       setSubmitting(false);
@@ -88,12 +94,22 @@ export default function AdminAnnouncements() {
 
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this announcement?")) return;
+    setError("");
+    setSuccess("");
+    setDeletingId(id);
     try {
       await api.delete(`/announcements/${id}`);
       setSuccess("Announcement deleted");
       fetchAnnouncements();
     } catch (err) {
-      setError("Failed to delete announcement");
+      console.error("Delete announcement error:", err.response?.status, err.response?.data || err.message);
+      setError(
+        err.response?.data?.message
+          ? `Failed to delete: ${err.response.data.message}`
+          : `Failed to delete announcement (status ${err.response?.status || "unknown"})`
+      );
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -113,13 +129,15 @@ export default function AdminAnnouncements() {
       </div>
 
       {error && (
-        <div className="mb-4 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-sm">
-          {error}
+        <div className="mb-4 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-sm flex justify-between items-center">
+          <span>{error}</span>
+          <button onClick={() => setError("")} className="text-red-400 hover:text-red-600">✕</button>
         </div>
       )}
       {success && (
-        <div className="mb-4 px-3 py-2 rounded-lg bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-400 text-sm">
-          {success}
+        <div className="mb-4 px-3 py-2 rounded-lg bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-400 text-sm flex justify-between items-center">
+          <span>{success}</span>
+          <button onClick={() => setSuccess("")} className="text-green-400 hover:text-green-600">✕</button>
         </div>
       )}
 
@@ -148,7 +166,8 @@ export default function AdminAnnouncements() {
                   </button>
                   <button
                     onClick={() => handleDelete(a._id)}
-                    className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 text-red-500 dark:text-red-400"
+                    disabled={deletingId === a._id}
+                    className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 text-red-500 dark:text-red-400 disabled:opacity-50"
                     title="Delete"
                   >
                     <Trash2 size={14} />
