@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Plus, Pencil, Trash2, Upload, X } from "lucide-react";
 import api from "../../api/axios";
 
 const categoryOptions = ["Cultural", "Health & Wellness", "Sports", "Social"];
@@ -29,7 +29,10 @@ export default function AdminEvents() {
   const [date, setDate] = useState("");
   const [location, setLocation] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [imagePreview, setImagePreview] = useState("");
+  const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const fileInputRef = useRef(null);
 
   const fetchEvents = async () => {
     try {
@@ -55,8 +58,10 @@ export default function AdminEvents() {
     setDate("");
     setLocation("");
     setImageUrl("");
+    setImagePreview("");
     setEditingId(null);
     setShowForm(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const openCreateForm = () => {
@@ -75,9 +80,41 @@ export default function AdminEvents() {
     setDate(e.date ? new Date(e.date).toISOString().slice(0, 16) : "");
     setLocation(e.location);
     setImageUrl(e.imageUrl || "");
+    setImagePreview(e.imageUrl || "");
     setError("");
     setSuccess("");
     setShowForm(true);
+  };
+
+  const handleImageSelect = async (ev) => {
+    const file = ev.target.files[0];
+    if (!file) return;
+
+    setImagePreview(URL.createObjectURL(file));
+    setUploading(true);
+    setError("");
+
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const res = await api.post("/upload", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      setImageUrl(res.data.imageUrl);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to upload image");
+      setImagePreview("");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImageUrl("");
+    setImagePreview("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleSubmit = async (ev) => {
@@ -288,19 +325,53 @@ export default function AdminEvents() {
               </div>
 
               <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Image URL (optional)</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Event Photo</label>
+
+                {imagePreview ? (
+                  <div className="relative mt-2">
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      className="w-full h-40 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleRemoveImage}
+                      className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1.5 hover:bg-black/80"
+                    >
+                      <X size={14} />
+                    </button>
+                    {uploading && (
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-lg">
+                        <p className="text-white text-sm">Uploading...</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="mt-2 w-full flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg py-6 text-gray-500 dark:text-gray-400 hover:border-purple-400 dark:hover:border-purple-600 transition"
+                  >
+                    <Upload size={20} />
+                    <span className="text-sm">Tap to choose a photo from your device</span>
+                  </button>
+                )}
+
                 <input
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  placeholder="https://..."
-                  className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100"
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  capture="environment"
+                  onChange={handleImageSelect}
+                  className="hidden"
                 />
               </div>
 
               <div className="flex gap-2 pt-2">
                 <button
                   type="submit"
-                  disabled={submitting}
+                  disabled={submitting || uploading}
                   className="flex-1 bg-purple-600 text-white py-2 rounded-lg text-sm font-medium disabled:opacity-60"
                 >
                   {submitting ? "..." : editingId ? "Save Changes" : "Create Event"}
