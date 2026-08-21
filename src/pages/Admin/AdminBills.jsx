@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import api from "../../api/axios";
+import { useCurrency } from "../../context/CurrencyContext";
 
 const statusOptions = ["Unpaid", "Paid"];
 
@@ -9,7 +10,10 @@ const statusColorMap = {
   Paid: "bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400",
 };
 
+const INR_TO_USD_RATE = 83;
+
 export default function AdminBills() {
+  const { formatAmount } = useCurrency();
   const [bills, setBills] = useState([]);
   const [residents, setResidents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,7 +25,7 @@ export default function AdminBills() {
   const [showForm, setShowForm] = useState(false);
   const [userId, setUserId] = useState("");
   const [type, setType] = useState("");
-  const [amount, setAmount] = useState("");
+  const [amountInr, setAmountInr] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -58,7 +62,7 @@ export default function AdminBills() {
   const resetForm = () => {
     setUserId("");
     setType("");
-    setAmount("");
+    setAmountInr("");
     setDueDate("");
     setShowForm(false);
   };
@@ -72,12 +76,13 @@ export default function AdminBills() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!userId || !type || !amount || !dueDate) return;
+    if (!userId || !type || !amountInr || !dueDate) return;
     setSubmitting(true);
     setError("");
     setSuccess("");
     try {
-      await api.post("/bills", { userId, type, amount: parseFloat(amount), dueDate });
+      const amountUsd = parseFloat(amountInr) / INR_TO_USD_RATE;
+      await api.post("/bills", { userId, type, amount: amountUsd, dueDate });
       setSuccess("Bill created successfully");
       resetForm();
       fetchBills();
@@ -185,7 +190,7 @@ export default function AdminBills() {
                     </p>
                   </td>
                   <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{b.type}</td>
-                  <td className="px-4 py-3 text-gray-700 dark:text-gray-300">${b.amount.toFixed(2)}</td>
+                  <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{formatAmount(b.amount)}</td>
                   <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{formatDate(b.dueDate)}</td>
                   <td className="px-4 py-3">
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColorMap[b.status] || statusColorMap.Unpaid}`}>
@@ -246,15 +251,18 @@ export default function AdminBills() {
               </div>
 
               <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Amount ($)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder="e.g., 120.00"
-                  className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100"
-                />
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Amount (₹)</label>
+                <div className="relative mt-1">
+                  <span className="absolute left-3 top-2 text-gray-400 dark:text-gray-500 text-sm">₹</span>
+                  <input
+                    type="number"
+                    step="1"
+                    value={amountInr}
+                    onChange={(e) => setAmountInr(e.target.value)}
+                    placeholder="e.g., 10000"
+                    className="w-full pl-7 pr-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100"
+                  />
+                </div>
               </div>
 
               <div>
