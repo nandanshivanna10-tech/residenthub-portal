@@ -6,3 +6,35 @@ body {
   font-family: 'Inter', system-ui, sans-serif;
   background-color: #f8f9fb;
 }
+.callBtnActive {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background-color: #16a34a;
+  color: white;
+}
+
+.callBtnDisabled {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background-color: #e5e7eb;
+  color: #9ca3af;
+}
+
+.dark .callBtnDisabled {
+  background-color: #374151;
+  color: #6b7280;
+}.
