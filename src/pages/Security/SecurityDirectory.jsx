@@ -38,6 +38,8 @@ export default function SecurityDirectory() {
 
   const towers = ["All", "Tower A", "Tower B", "Tower C"];
 
+  const callHref = selected && selected.phone ? "tel:" + selected.phone : "";
+
   return (
     <div>
       <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Resident Directory</h2>
@@ -57,7 +59,7 @@ export default function SecurityDirectory() {
         >
           {towers.map((tw) => (
             <option key={tw} value={tw}>
-              {tw === "All" ? "Block: All" : `Block: ${tw}`}
+              {tw === "All" ? "Block: All" : "Block: " + tw}
             </option>
           ))}
         </select>
@@ -95,34 +97,33 @@ export default function SecurityDirectory() {
                   </td>
                 </tr>
               ) : (
-                residents.map((r) => (
-                  <tr
-                    key={r._id}
-                    onClick={() => setSelected(r)}
-                    className={`border-t border-gray-100 dark:border-gray-800 cursor-pointer ${
-                      selected?._id === r._id ? "bg-green-50 dark:bg-green-950" : "hover:bg-gray-50 dark:hover:bg-gray-800"
-                    }`}
-                  >
-                    <td className="px-4 py-3 flex items-center gap-2 font-medium text-green-600 dark:text-green-400">
-                      <div className="w-7 h-7 rounded-full bg-green-100 dark:bg-green-950 flex items-center justify-center text-xs font-semibold">
-                        {r.fullName.charAt(0)}
-                      </div>
-                      {r.fullName}
-                    </td>
-                    <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{r.unit || "-"}</td>
-                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{r.tower || "-"}</td>
-                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{r.phone || "-"}</td>
-                    <td className="px-4 py-3">
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                        r.status === "owner"
-                          ? "bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400"
-                          : "bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400"
-                      }`}>
-                        {r.status === "owner" ? "Owner" : "Tenant"}
-                      </span>
-                    </td>
-                  </tr>
-                ))
+                residents.map((r) => {
+                  const isSelected = selected && selected._id === r._id;
+                  const rowClass = isSelected
+                    ? "border-t border-gray-100 dark:border-gray-800 cursor-pointer bg-green-50 dark:bg-green-950"
+                    : "border-t border-gray-100 dark:border-gray-800 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800";
+                  const statusClass =
+                    r.status === "owner"
+                      ? "text-xs px-2 py-0.5 rounded-full font-medium bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400"
+                      : "text-xs px-2 py-0.5 rounded-full font-medium bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400";
+
+                  return (
+                    <tr key={r._id} onClick={() => setSelected(r)} className={rowClass}>
+                      <td className="px-4 py-3 flex items-center gap-2 font-medium text-green-600 dark:text-green-400">
+                        <div className="w-7 h-7 rounded-full bg-green-100 dark:bg-green-950 flex items-center justify-center text-xs font-semibold">
+                          {r.fullName.charAt(0)}
+                        </div>
+                        {r.fullName}
+                      </td>
+                      <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{r.unit || "-"}</td>
+                      <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{r.tower || "-"}</td>
+                      <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{r.phone || "-"}</td>
+                      <td className="px-4 py-3">
+                        <span className={statusClass}>{r.status === "owner" ? "Owner" : "Tenant"}</span>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -139,7 +140,7 @@ export default function SecurityDirectory() {
                 </div>
                 <p className="font-semibold text-gray-900 dark:text-gray-100">{selected.fullName}</p>
                 <p className="text-sm text-gray-400 dark:text-gray-500">
-                  {selected.tower} {selected.unit ? `- ${selected.unit}` : ""}
+                  {selected.tower} {selected.unit ? "- " + selected.unit : ""}
                 </p>
                 <span className="mt-2 text-xs px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400 font-medium">
                   {selected.status === "owner" ? "Owner" : "Tenant"}
@@ -151,7 +152,9 @@ export default function SecurityDirectory() {
                   <Phone size={14} className="text-gray-400" />
                   <div>
                     <p className="text-xs text-gray-400 dark:text-gray-500">Phone Number</p>
-                    <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{selected.phone || "Not specified"}</p>
+                    <p className="text-sm font-medium text-gray-800 dark:text-gray-100">
+                      {selected.phone || "Not specified"}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -159,22 +162,26 @@ export default function SecurityDirectory() {
                   <div>
                     <p className="text-xs text-gray-400 dark:text-gray-500">Unit</p>
                     <p className="text-sm font-medium text-gray-800 dark:text-gray-100">
-                      {selected.tower} {selected.unit ? `- ${selected.unit}` : ""}
+                      {selected.tower} {selected.unit ? "- " + selected.unit : ""}
                     </p>
                   </div>
                 </div>
               </div>
 
-              
-                href={selected.phone ? `tel:${selected.phone}` : undefined}
-                className={`w-full mt-5 flex items-center justify-center gap-1 py-2 rounded-lg text-sm font-medium ${
-                  selected.phone
-                    ? "bg-green-600 text-white"
-                    : "bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 pointer-events-none"
-                }`}
-              >
-                <Phone size={14} /> Call Resident
-              </a>
+              {selected.phone ? (
+                
+                  href={callHref}
+                  className="w-full mt-5 flex items-center justify-center gap-1 py-2 rounded-lg text-sm font-medium bg-green-600 text-white"
+                >
+                  <Phone size={14} />
+                  Call Resident
+                </a>
+              ) : (
+                <div className="w-full mt-5 flex items-center justify-center gap-1 py-2 rounded-lg text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500">
+                  <Phone size={14} />
+                  Call Resident
+                </div>
+              )}
             </>
           )}
         </div>
