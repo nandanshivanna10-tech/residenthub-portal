@@ -4,6 +4,7 @@ import { Building2, Eye, EyeOff, Sun, Moon } from "lucide-react";
 import logo from "../assets/logo.jpeg";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
+import { useNavigate, Link } from "react-router-dom";
 
 export default function Login() {
   const [role, setRole] = useState("Resident");
@@ -115,9 +116,9 @@ export default function Login() {
               <div>
                 <div className="flex justify-between items-center">
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
-                  <a href="#" className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                  <Link to="/forgot-password" className="text-xs text-blue-600 dark:text-blue-400 font-medium">
                     Forgot Password?
-                  </a>
+                  </Link>
                 </div>
                 <div className="relative mt-1">
                   <input
@@ -147,9 +148,9 @@ export default function Login() {
 
               <p className="text-center text-sm text-gray-500 dark:text-gray-400">
                 Don't have an account?{" "}
-                <a href="#" className="text-blue-600 dark:text-blue-400 font-medium">
-                  Create Account
-                </a>
+                <Link to="/signup" className="text-blue-600 dark:text-blue-400 font-medium">
+                 Create Account
+                </Link>
               </p>
             </form>
           </div>

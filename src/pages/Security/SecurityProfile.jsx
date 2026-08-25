@@ -4,7 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import api from "../../api/axios";
 
 export default function SecurityProfile() {
-  const { user, setUser } = useAuth();
+  const { user, updateUser } = useAuth();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -33,7 +33,7 @@ export default function SecurityProfile() {
     }
   };
 
-  useEffect(() => {
+  useEffect(function () {
     fetchProfile();
   }, []);
 
@@ -45,10 +45,7 @@ export default function SecurityProfile() {
       const res = await api.put("/profile", { fullName, email, phone });
       setLastUpdated(res.data.updatedAt);
       setSuccess("Profile updated successfully");
-
-      const updatedUser = Object.assign({}, user, { fullName: res.data.fullName, email: res.data.email });
-      localStorage.setItem("user", JSON.stringify(updatedUser));
-      if (setUser) setUser(updatedUser);
+      updateUser({ fullName: res.data.fullName, email: res.data.email });
     } catch (err) {
       setError("Failed to save changes");
     } finally {
@@ -74,12 +71,13 @@ export default function SecurityProfile() {
 
       setProfilePhoto(res.data.profilePhoto);
       setSuccess("Profile photo updated");
-
-      const updatedUser = Object.assign({}, user, { profilePhoto: res.data.profilePhoto });
-      localStorage.setItem("user", JSON.stringify(updatedUser));
-      if (setUser) setUser(updatedUser);
+      updateUser({ profilePhoto: res.data.profilePhoto });
     } catch (err) {
-      setError(err.response && err.response.data && err.response.data.message ? err.response.data.message : "Failed to upload photo");
+      let msg = "Failed to upload photo";
+      if (err.response && err.response.data && err.response.data.message) {
+        msg = err.response.data.message;
+      }
+      setError(msg);
     } finally {
       setUploadingPhoto(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -117,7 +115,10 @@ export default function SecurityProfile() {
               </div>
             )}
             <button
-              onClick={function () { fileInputRef.current && fileInputRef.current.click(); }}
+              type="button"
+              onClick={function () {
+                if (fileInputRef.current) fileInputRef.current.click();
+              }}
               disabled={uploadingPhoto}
               className="absolute bottom-0 right-0 bg-green-600 text-white rounded-full p-1.5 border-2 border-white dark:border-gray-900 disabled:opacity-60"
               title="Change photo"

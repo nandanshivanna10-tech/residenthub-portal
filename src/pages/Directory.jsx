@@ -19,7 +19,7 @@ export default function Directory() {
       if (search) params.append("search", search);
       if (tower !== "All") params.append("tower", tower);
 
-      const res = await api.get(`/directory?${params.toString()}`);
+      const res = await api.get("/directory?" + params.toString());
       setResidents(res.data);
       if (res.data.length > 0 && !selected) {
         setSelected(res.data[0]);
@@ -31,14 +31,38 @@ export default function Directory() {
     }
   };
 
-  useEffect(() => {
-    const debounce = setTimeout(() => {
+  useEffect(function () {
+    const debounce = setTimeout(function () {
       fetchDirectory();
     }, 300);
-    return () => clearTimeout(debounce);
+    return function () {
+      clearTimeout(debounce);
+    };
   }, [search, tower]);
 
   const towers = ["All", "Tower A", "Tower B", "Tower C"];
+
+  function Avatar({ resident, size }) {
+    const dim = size || 28;
+    if (resident.profilePhoto) {
+      return (
+        <img
+          src={resident.profilePhoto}
+          alt={resident.fullName}
+          style={{ width: dim, height: dim }}
+          className="rounded-full object-cover"
+        />
+      );
+    }
+    return (
+      <div
+        style={{ width: dim, height: dim }}
+        className="rounded-full bg-blue-100 dark:bg-blue-950 flex items-center justify-center text-xs font-semibold text-blue-600 dark:text-blue-400"
+      >
+        {resident.fullName.charAt(0)}
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -48,28 +72,30 @@ export default function Directory() {
       <div className="flex justify-between items-center mb-4 gap-3">
         <input
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={function (e) { setSearch(e.target.value); }}
           placeholder={t("searchNameOrUnit")}
           className="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100"
         />
         <select
           value={tower}
-          onChange={(e) => setTower(e.target.value)}
+          onChange={function (e) { setTower(e.target.value); }}
           className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100"
         >
-          {towers.map((tw) => (
-            <option key={tw} value={tw}>
-              {tw === "All" ? t("blockAll") : `Block: ${tw}`}
-            </option>
-          ))}
+          {towers.map(function (tw) {
+            return (
+              <option key={tw} value={tw}>
+                {tw === "All" ? t("blockAll") : "Block: " + tw}
+              </option>
+            );
+          })}
         </select>
       </div>
 
-      {error && (
+      {error ? (
         <div className="mb-4 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-sm">
           {error}
         </div>
-      )}
+      ) : null}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors">
@@ -91,47 +117,47 @@ export default function Directory() {
                     Loading...
                   </td>
                 </tr>
-              ) : residents.length === 0 ? (
+              ) : null}
+              {!loading && residents.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-6 text-center text-gray-400 dark:text-gray-500">
                     No residents found
                   </td>
                 </tr>
-              ) : (
-                residents.map((r) => (
-                  <tr
-                    key={r._id}
-                    onClick={() => setSelected(r)}
-                    className={`border-t border-gray-100 dark:border-gray-800 cursor-pointer ${
-                      selected?._id === r._id ? "bg-blue-50 dark:bg-blue-950" : "hover:bg-gray-50 dark:hover:bg-gray-800"
-                    }`}
-                  >
-                    <td className="px-4 py-3 flex items-center gap-2 font-medium text-blue-600 dark:text-blue-400">
-                      <div className="w-7 h-7 rounded-full bg-blue-100 dark:bg-blue-950 flex items-center justify-center text-xs font-semibold">
-                        {r.fullName.charAt(0)}
-                      </div>
-                      {r.fullName}
-                    </td>
-                    <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{r.unit || "-"}</td>
-                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{r.tower || "-"}</td>
-                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{r.phone || "-"}</td>
-                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                      {new Date(r.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                          r.status === "owner"
-                            ? "bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400"
-                            : "bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400"
-                        }`}
-                      >
-                        {r.status === "owner" ? t("owner") : t("tenant")}
-                      </span>
-                    </td>
-                  </tr>
-                ))
-              )}
+              ) : null}
+              {!loading && residents.length > 0
+                ? residents.map(function (r) {
+                    const isSelected = selected && selected._id === r._id;
+                    const rowClass = isSelected
+                      ? "border-t border-gray-100 dark:border-gray-800 cursor-pointer bg-blue-50 dark:bg-blue-950"
+                      : "border-t border-gray-100 dark:border-gray-800 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800";
+                    return (
+                      <tr key={r._id} onClick={function () { setSelected(r); }} className={rowClass}>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <Avatar resident={r} size={28} />
+                            <span className="font-medium text-blue-600 dark:text-blue-400">{r.fullName}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{r.unit || "-"}</td>
+                        <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{r.tower || "-"}</td>
+                        <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{r.phone || "-"}</td>
+                        <td className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                          {new Date(r.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={
+                            r.status === "owner"
+                              ? "text-xs px-2 py-0.5 rounded-full font-medium bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400"
+                              : "text-xs px-2 py-0.5 rounded-full font-medium bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400"
+                          }>
+                            {r.status === "owner" ? t("owner") : t("tenant")}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })
+                : null}
             </tbody>
           </table>
         </div>
@@ -140,14 +166,12 @@ export default function Directory() {
           {!selected ? (
             <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">Select a resident to view details</p>
           ) : (
-            <>
+            <div>
               <div className="flex flex-col items-center text-center mb-4">
-                <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-950 flex items-center justify-center text-xl font-semibold text-blue-600 dark:text-blue-400 mb-2">
-                  {selected.fullName.charAt(0)}
-                </div>
-                <p className="font-semibold text-gray-900 dark:text-gray-100">{selected.fullName}</p>
+                <Avatar resident={selected} size={64} />
+                <p className="font-semibold text-gray-900 dark:text-gray-100 mt-2">{selected.fullName}</p>
                 <p className="text-sm text-gray-400 dark:text-gray-500">
-                  {selected.tower} {selected.unit ? `- ${selected.unit}` : ""}
+                  {selected.tower} {selected.unit ? "- " + selected.unit : ""}
                 </p>
                 <span className="mt-2 text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400 font-medium">
                   {selected.status === "owner" ? t("owner") : t("tenant")}
@@ -186,7 +210,7 @@ export default function Directory() {
                   <MessageSquare size={14} /> {t("message")}
                 </button>
               </div>
-            </>
+            </div>
           )}
         </div>
       </div>
