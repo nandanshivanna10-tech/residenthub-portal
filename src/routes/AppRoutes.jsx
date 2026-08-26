@@ -1,12 +1,12 @@
 import { Routes, Route } from "react-router-dom";
 import Login from "../pages/Login";
+import Signup from "../pages/Signup";
+import ForgotPassword from "../pages/ForgotPassword";
+import ResetPassword from "../pages/ResetPassword";
 import DashboardLayout from "../components/layout/DashboardLayout";
 import AdminLayout from "../components/layout/AdminLayout";
 import SecurityLayout from "../components/layout/SecurityLayout";
 import ProtectedRoute from "./ProtectedRoute";
-import Signup from "../pages/Signup";
-import ForgotPassword from "../pages/ForgotPassword";
-import ResetPassword from "../pages/ResetPassword";
 
 import Dashboard from "../pages/Dashboard";
 import Maintenance from "../pages/Maintenance";
