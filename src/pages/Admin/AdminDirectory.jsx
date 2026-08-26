@@ -1,32 +1,27 @@
 import { useState, useEffect } from "react";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Phone, MessageSquare } from "lucide-react";
 import api from "../../api/axios";
 
 export default function AdminDirectory() {
   const [residents, setResidents] = useState([]);
+  const [selected, setSelected] = useState(null);
+  const [search, setSearch] = useState("");
+  const [tower, setTower] = useState("All");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [search, setSearch] = useState("");
-  const [deletingId, setDeletingId] = useState(null);
 
-  const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState(null);
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
-  const [tower, setTower] = useState("");
-  const [unit, setUnit] = useState("");
-  const [status, setStatus] = useState("owner");
-  const [submitting, setSubmitting] = useState(false);
-
-  const fetchResidents = async () => {
+  const fetchDirectory = async () => {
     try {
       setLoading(true);
-      const params = search ? `?search=${encodeURIComponent(search)}` : "";
-      const res = await api.get(`/directory${params}`);
+      const params = new URLSearchParams();
+      if (search) params.append("search", search);
+      if (tower !== "All") params.append("tower", tower);
+
+      const res = await api.get(`/directory?${params.toString()}`);
       setResidents(res.data);
+      if (res.data.length > 0 && !selected) {
+        setSelected(res.data[0]);
+      }
     } catch (err) {
       setError("Failed to load directory");
     } finally {
@@ -36,297 +31,185 @@ export default function AdminDirectory() {
 
   useEffect(() => {
     const debounce = setTimeout(() => {
-      fetchResidents();
+      fetchDirectory();
     }, 300);
     return () => clearTimeout(debounce);
-  }, [search]);
+  }, [search, tower]);
 
-  const resetForm = () => {
-    setFullName("");
-    setEmail("");
-    setPhone("");
-    setPassword("");
-    setTower("");
-    setUnit("");
-    setStatus("owner");
-    setEditingId(null);
-    setShowForm(false);
-  };
-
-  const openCreateForm = () => {
-    resetForm();
-    setError("");
-    setSuccess("");
-    setShowForm(true);
-  };
-
-  const openEditForm = (r) => {
-    setEditingId(r._id);
-    setFullName(r.fullName);
-    setEmail(r.email);
-    setPhone(r.phone || "");
-    setPassword("");
-    setTower(r.tower || "");
-    setUnit(r.unit || "");
-    setStatus(r.status || "owner");
-    setError("");
-    setSuccess("");
-    setShowForm(true);
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSubmitting(true);
-    setError("");
-    setSuccess("");
-    try {
-      if (editingId) {
-        await api.put(`/directory/${editingId}`, { fullName, phone, tower, unit, status });
-        setSuccess("Resident updated");
-      } else {
-        if (!fullName || !email || !password || !tower || !unit) return;
-        await api.post("/directory", { fullName, email, phone, password, tower, unit, status });
-        setSuccess("Resident added");
-      }
-      resetForm();
-      fetchResidents();
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to save resident");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleDelete = async (id) => {
-    if (!window.confirm("Remove this resident? This will delete their account.")) return;
-    setError("");
-    setSuccess("");
-    setDeletingId(id);
-    try {
-      await api.delete(`/directory/${id}`);
-      setSuccess("Resident removed");
-      fetchResidents();
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to remove resident");
-    } finally {
-      setDeletingId(null);
-    }
-  };
+  const towers = ["All", "Tower A", "Tower B", "Tower C"];
 
   return (
     <div>
-      <div className="flex justify-between items-start mb-6">
-        <div>
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Directory</h2>
-          <p className="text-gray-500 dark:text-gray-400">Manage resident accounts and unit details</p>
-        </div>
-        <button
-          onClick={openCreateForm}
-          className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap"
-        >
-          <Plus size={16} /> Add Resident
-        </button>
-      </div>
+      <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Resident Directory</h2>
+      <p className="text-gray-500 dark:text-gray-400 mb-4">Find and contact any resident, admin, or security member</p>
 
-      <input
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        placeholder="Search name or unit..."
-        className="mb-4 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 w-full sm:w-80"
-      />
+      <div className="flex justify-between items-center mb-4 gap-3">
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search name or unit..."
+          className="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100"
+        />
+        <select
+          value={tower}
+          onChange={(e) => setTower(e.target.value)}
+          className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100"
+        >
+          {towers.map((tw) => (
+            <option key={tw} value={tw}>
+              {tw === "All" ? "Block: All" : `Block: ${tw}`}
+            </option>
+          ))}
+        </select>
+      </div>
 
       {error && (
-        <div className="mb-4 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-sm flex justify-between items-center">
-          <span>{error}</span>
-          <button onClick={() => setError("")} className="text-red-400 hover:text-red-600">✕</button>
-        </div>
-      )}
-      {success && (
-        <div className="mb-4 px-3 py-2 rounded-lg bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-400 text-sm flex justify-between items-center">
-          <span>{success}</span>
-          <button onClick={() => setSuccess("")} className="text-green-400 hover:text-green-600">✕</button>
+        <div className="mb-4 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-sm">
+          {error}
         </div>
       )}
 
-      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 text-left">
-            <tr>
-              <th className="px-4 py-3">Resident</th>
-              <th className="px-4 py-3">Contact</th>
-              <th className="px-4 py-3">Tower</th>
-              <th className="px-4 py-3">Unit</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 text-left">
               <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-gray-400 dark:text-gray-500">
-                  Loading...
-                </td>
+                <th className="px-4 py-3">Name</th>
+                <th className="px-4 py-3">Unit</th>
+                <th className="px-4 py-3">Tower</th>
+                <th className="px-4 py-3">Contact</th>
+                <th className="px-4 py-3">Joined</th>
+                <th className="px-4 py-3">Status</th>
               </tr>
-            ) : residents.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-gray-400 dark:text-gray-500">
-                  No residents found
-                </td>
-              </tr>
-            ) : (
-              residents.map((r) => (
-                <tr key={r._id} className="border-t border-gray-100 dark:border-gray-800">
-                  <td className="px-4 py-3 font-medium text-gray-800 dark:text-gray-100">{r.fullName}</td>
-                  <td className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                    <p>{r.email}</p>
-                    <p className="text-xs">{r.phone || "-"}</p>
-                  </td>
-                  <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{r.tower || "-"}</td>
-                  <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{r.unit || "-"}</td>
-                  <td className="px-4 py-3">
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                      r.status === "owner"
-                        ? "bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400"
-                        : "bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400"
-                    }`}>
-                      {r.status === "owner" ? "Owner" : "Tenant"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => openEditForm(r)}
-                        className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400"
-                        title="Edit"
-                      >
-                        <Pencil size={14} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(r._id)}
-                        disabled={deletingId === r._id}
-                        className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 text-red-500 dark:text-red-400 disabled:opacity-50"
-                        title="Remove"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className="px-4 py-6 text-center text-gray-400 dark:text-gray-500">
+                    Loading...
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {showForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-5 w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-semibold text-gray-900 dark:text-gray-100">
-                {editingId ? "Edit Resident" : "Add Resident"}
-              </h3>
-              <button onClick={resetForm} className="text-gray-400">✕</button>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-3">
-              <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
-                <input
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={!!editingId}
-                  className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 disabled:opacity-60"
-                />
-                {editingId && (
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Email cannot be changed</p>
-                )}
-              </div>
-
-              {!editingId && (
-                <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Temporary Password</label>
-                  <input
-                    type="text"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Resident will use this to log in"
-                    className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100"
-                  />
-                </div>
+              ) : residents.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-4 py-6 text-center text-gray-400 dark:text-gray-500">
+                    No residents found
+                  </td>
+                </tr>
+              ) : (
+                residents.map((r) => (
+                  <tr
+                    key={r._id}
+                    onClick={() => setSelected(r)}
+                    className={`border-t border-gray-100 dark:border-gray-800 cursor-pointer ${
+                      selected?._id === r._id ? "bg-purple-50 dark:bg-purple-950" : "hover:bg-gray-50 dark:hover:bg-gray-800"
+                    }`}
+                  >
+                    <td className="px-4 py-3 flex items-center gap-2 font-medium text-purple-600 dark:text-purple-400">
+                      {r.profilePicture ? (
+                        <img src={r.profilePicture} alt={r.fullName} className="w-7 h-7 rounded-full object-cover" />
+                      ) : (
+                        <div className="w-7 h-7 rounded-full bg-purple-100 dark:bg-purple-950 flex items-center justify-center text-xs font-semibold">
+                          {r.fullName.charAt(0)}
+                        </div>
+                      )}
+                      {r.fullName}
+                    </td>
+                    <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{r.unit || "-"}</td>
+                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{r.tower || "-"}</td>
+                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{r.phone || "-"}</td>
+                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                      {new Date(r.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                          r.status === "owner"
+                            ? "bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400"
+                            : "bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400"
+                        }`}
+                      >
+                        {r.status === "owner" ? "Owner" : "Tenant"}
+                      </span>
+                    </td>
+                  </tr>
+                ))
               )}
-
-              <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Phone Number</label>
-                <input
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Tower</label>
-                  <input
-                    value={tower}
-                    onChange={(e) => setTower(e.target.value)}
-                    placeholder="e.g., Tower B"
-                    className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Unit</label>
-                  <input
-                    value={unit}
-                    onChange={(e) => setUnit(e.target.value)}
-                    placeholder="e.g., 402"
-                    className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
-                <select
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value)}
-                  className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100"
-                >
-                  <option value="owner">Owner</option>
-                  <option value="tenant">Tenant</option>
-                </select>
-              </div>
-
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="flex-1 bg-purple-600 text-white py-2 rounded-lg text-sm font-medium disabled:opacity-60"
-                >
-                  {submitting ? "..." : editingId ? "Save Changes" : "Add Resident"}
-                </button>
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  className="px-4 py-2 rounded-lg text-sm font-medium border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
+            </tbody>
+          </table>
         </div>
-      )}
+
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-5 h-fit transition-colors">
+          {!selected ? (
+            <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">Select a resident to view details</p>
+          ) : (
+            <>
+              <div className="flex flex-col items-center text-center mb-4">
+                {selected.profilePicture ? (
+                  <img
+                    src={selected.profilePicture}
+                    alt={selected.fullName}
+                    className="w-16 h-16 rounded-full object-cover mb-2"
+                  />
+                ) : (
+                  <div className="w-16 h-16 rounded-full bg-purple-100 dark:bg-purple-950 flex items-center justify-center text-xl font-semibold text-purple-600 dark:text-purple-400 mb-2">
+                    {selected.fullName.charAt(0)}
+                  </div>
+                )}
+                <p className="font-semibold text-gray-900 dark:text-gray-100">{selected.fullName}</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500">
+                  {selected.tower} {selected.unit ? `- ${selected.unit}` : ""}
+                </p>
+                <span className="mt-2 text-xs px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-400 font-medium">
+                  {selected.status === "owner" ? "Owner" : "Tenant"}
+                </span>
+              </div>
+
+              <div className="space-y-3 border-t border-gray-100 dark:border-gray-800 pt-4">
+                <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide">Resident Details</p>
+                <div>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">Phone Number</p>
+                  <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{selected.phone || "Not specified"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">Email Address</p>
+                  <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{selected.email}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">Emergency Contact</p>
+                  <p className="text-sm font-medium text-gray-800 dark:text-gray-100">
+                    {selected.emergencyContact || "Not specified"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">Vehicle Registered</p>
+                  <p className="text-sm font-medium text-gray-800 dark:text-gray-100">
+                    {selected.vehicleNumber || "Not specified"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-2 mt-5">
+                
+                  href={selected.phone ? `tel:${selected.phone}` : undefined}
+                  className={`flex-1 flex items-center justify-center gap-1 border border-gray-200 dark:border-gray-700 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 ${
+                    !selected.phone ? "opacity-50 pointer-events-none" : ""
+                  }`}
+                >
+                  <Phone size={14} /> Call
+                </a>
+                
+                  href={selected.email ? `mailto:${selected.email}` : undefined}
+                  className={`flex-1 flex items-center justify-center gap-1 bg-purple-600 text-white py-2 rounded-lg text-sm font-medium ${
+                    !selected.email ? "opacity-50 pointer-events-none" : ""
+                  }`}
+                >
+                  <MessageSquare size={14} /> Message
+                </a>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

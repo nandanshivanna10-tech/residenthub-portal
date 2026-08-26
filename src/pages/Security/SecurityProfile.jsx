@@ -69,8 +69,8 @@ export default function SecurityProfile() {
       return;
     }
 
-    if (file.size > 2 * 1024 * 1024) {
-      setError("Image must be under 2MB");
+    if (file.size > 15 * 1024 * 1024) {
+      setError("Image must be under 15MB");
       return;
     }
 
