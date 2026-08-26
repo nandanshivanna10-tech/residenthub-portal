@@ -106,11 +106,17 @@ export default function Topbar({ title }) {
         </button>
 
         <div className="flex items-center gap-3">
-          <img
-            src="https://i.pravatar.cc/40?img=12"
-            alt="avatar"
-            className="w-9 h-9 rounded-full object-cover"
-          />
+          {user?.profilePicture ? (
+            <img
+              src={user.profilePicture}
+              alt="avatar"
+              className="w-9 h-9 rounded-full object-cover"
+            />
+          ) : (
+            <div className="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-950 flex items-center justify-center text-sm font-semibold text-blue-600 dark:text-blue-400">
+              {user?.fullName?.charAt(0) || "?"}
+            </div>
+          )}
           <div>
             <p className="text-sm font-medium text-gray-800 dark:text-gray-100 leading-tight">
               {user?.fullName || "Resident"}
