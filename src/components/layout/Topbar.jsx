@@ -14,6 +14,7 @@ export default function Topbar({ title }) {
   const navigate = useNavigate();
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [showCurrencyMenu, setShowCurrencyMenu] = useState(false);
+  const [showNotifMenu, setShowNotifMenu] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -60,9 +61,11 @@ export default function Topbar({ title }) {
                     changeCurrency(code);
                     setShowCurrencyMenu(false);
                   }}
-                  className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 ${
-                    currency === code ? "text-blue-600 font-medium" : "text-gray-700 dark:text-gray-200"
-                  }`}
+                  className={
+                    currency === code
+                      ? "w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 text-blue-600 font-medium"
+                      : "w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
+                  }
                 >
                   {currencyLabel(code)}
                 </button>
@@ -82,44 +85,57 @@ export default function Topbar({ title }) {
           </button>
           {showLangMenu && (
             <div className="absolute right-0 mt-2 w-36 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
-              {languageList.map(({ code, label }) => (
+              {languageList.map((l) => (
                 <button
-                  key={code}
+                  key={l.code}
                   onClick={() => {
-                    changeLanguage(code);
+                    changeLanguage(l.code);
                     setShowLangMenu(false);
                   }}
-                  className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 ${
-                    lang === code ? "text-blue-600 font-medium" : "text-gray-700 dark:text-gray-200"
-                  }`}
+                  className={
+                    lang === l.code
+                      ? "w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 text-blue-600 font-medium"
+                      : "w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
+                  }
                 >
-                  {label}
+                  {l.label}
                 </button>
               ))}
             </div>
           )}
         </div>
 
-        <button className="relative">
-          <Bell size={20} className="text-gray-500 dark:text-gray-300" />
-          <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full" />
-        </button>
+        <div className="relative">
+          <button
+            onClick={() => setShowNotifMenu(!showNotifMenu)}
+            className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-300"
+            title="Notifications"
+          >
+            <Bell size={20} />
+          </button>
+          {showNotifMenu && (
+            <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
+              <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Notifications</p>
+              </div>
+              <div className="px-4 py-6 text-center">
+                <p className="text-sm text-gray-400 dark:text-gray-500">No new notifications</p>
+              </div>
+            </div>
+          )}
+        </div>
 
         <div className="flex items-center gap-3">
-          {user?.profilePicture ? (
-            <img
-              src={user.profilePicture}
-              alt="avatar"
-              className="w-9 h-9 rounded-full object-cover"
-            />
+          {user && user.profilePicture ? (
+            <img src={user.profilePicture} alt="avatar" className="w-9 h-9 rounded-full object-cover" />
           ) : (
             <div className="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-950 flex items-center justify-center text-sm font-semibold text-blue-600 dark:text-blue-400">
-              {user?.fullName?.charAt(0) || "?"}
+              {user && user.fullName ? user.fullName.charAt(0) : "?"}
             </div>
           )}
           <div>
             <p className="text-sm font-medium text-gray-800 dark:text-gray-100 leading-tight">
-              {user?.fullName || "Resident"}
+              {user && user.fullName ? user.fullName : "Resident"}
             </p>
             <p className="text-xs text-gray-400 dark:text-gray-500">{t("residentAccount")}</p>
           </div>
