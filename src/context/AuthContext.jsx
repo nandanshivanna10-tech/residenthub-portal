@@ -8,7 +8,6 @@ export function AuthProvider({ children }) {
     const saved = localStorage.getItem("user");
     return saved ? JSON.parse(saved) : null;
   });
-  const [loading, setLoading] = useState(false);
 
   const login = async (email, password) => {
     const res = await api.post("/auth/login", { email, password });
@@ -33,7 +32,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, setUser, login, signup, logout, loading }}>
+    <AuthContext.Provider value={{ user, setUser, login, signup, logout }}>
       {children}
     </AuthContext.Provider>
   );
