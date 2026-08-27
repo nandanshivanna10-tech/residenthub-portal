@@ -17,7 +17,7 @@ export default function AdminDirectory() {
       if (search) params.append("search", search);
       if (tower !== "All") params.append("tower", tower);
 
-      const res = await api.get(`/directory?${params.toString()}`);
+      const res = await api.get("/directory?" + params.toString());
       setResidents(res.data);
       if (res.data.length > 0 && !selected) {
         setSelected(res.data[0]);
@@ -38,6 +38,18 @@ export default function AdminDirectory() {
 
   const towers = ["All", "Tower A", "Tower B", "Tower C"];
 
+  const handleCall = () => {
+    if (selected && selected.phone) {
+      window.location.href = "tel:" + selected.phone;
+    }
+  };
+
+  const handleMessage = () => {
+    if (selected && selected.email) {
+      window.location.href = "mailto:" + selected.email;
+    }
+  };
+
   return (
     <div>
       <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Resident Directory</h2>
@@ -57,7 +69,7 @@ export default function AdminDirectory() {
         >
           {towers.map((tw) => (
             <option key={tw} value={tw}>
-              {tw === "All" ? "Block: All" : "Block: " + tw}
+              {tw}
             </option>
           ))}
         </select>
@@ -90,6 +102,7 @@ export default function AdminDirectory() {
                   </td>
                 </tr>
               )}
+
               {!loading && residents.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-4 py-6 text-center text-gray-400 dark:text-gray-500">
@@ -97,41 +110,46 @@ export default function AdminDirectory() {
                   </td>
                 </tr>
               )}
+
               {!loading &&
                 residents.map((r) => {
-                  const isSelected = selected && selected._id === r._id;
-                  const rowClass = isSelected
-                    ? "border-t border-gray-100 dark:border-gray-800 cursor-pointer bg-purple-50 dark:bg-purple-950"
-                    : "border-t border-gray-100 dark:border-gray-800 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800";
-                  const statusClass =
+                  const isSelected = selected != null && selected._id === r._id;
+                  const rowBg = isSelected ? "bg-purple-50 dark:bg-purple-950" : "hover:bg-gray-50 dark:hover:bg-gray-800";
+                  const statusBg =
                     r.status === "owner"
-                      ? "text-xs px-2 py-0.5 rounded-full font-medium bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400"
-                      : "text-xs px-2 py-0.5 rounded-full font-medium bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400";
+                      ? "bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400"
+                      : "bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400";
+                  const statusLabel = r.status === "owner" ? "Owner" : "Tenant";
+                  const joinedDate = new Date(r.createdAt).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  });
 
                   return (
-                    <tr key={r._id} onClick={() => setSelected(r)} className={rowClass}>
-                      <td className="px-4 py-3 flex items-center gap-2 font-medium text-purple-600 dark:text-purple-400">
-                        {r.profilePicture ? (
-                          <img src={r.profilePicture} alt={r.fullName} className="w-7 h-7 rounded-full object-cover" />
-                        ) : (
-                          <div className="w-7 h-7 rounded-full bg-purple-100 dark:bg-purple-950 flex items-center justify-center text-xs font-semibold">
-                            {r.fullName.charAt(0)}
-                          </div>
-                        )}
-                        {r.fullName}
+                    <tr
+                      key={r._id}
+                      onClick={() => setSelected(r)}
+                      className={"border-t border-gray-100 dark:border-gray-800 cursor-pointer " + rowBg}
+                    >
+                      <td className="px-4 py-3 font-medium text-purple-600 dark:text-purple-400">
+                        <div className="flex items-center gap-2">
+                          {r.profilePicture ? (
+                            <img src={r.profilePicture} alt={r.fullName} className="w-7 h-7 rounded-full object-cover" />
+                          ) : (
+                            <div className="w-7 h-7 rounded-full bg-purple-100 dark:bg-purple-950 flex items-center justify-center text-xs font-semibold">
+                              {r.fullName.charAt(0)}
+                            </div>
+                          )}
+                          <span>{r.fullName}</span>
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{r.unit || "-"}</td>
                       <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{r.tower || "-"}</td>
                       <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{r.phone || "-"}</td>
-                      <td className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                        {new Date(r.createdAt).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
-                      </td>
+                      <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{joinedDate}</td>
                       <td className="px-4 py-3">
-                        <span className={statusClass}>{r.status === "owner" ? "Owner" : "Tenant"}</span>
+                        <span className={"text-xs px-2 py-0.5 rounded-full font-medium " + statusBg}>{statusLabel}</span>
                       </td>
                     </tr>
                   );
@@ -146,7 +164,7 @@ export default function AdminDirectory() {
           )}
 
           {selected && (
-            <>
+            <div>
               <div className="flex flex-col items-center text-center mb-4">
                 {selected.profilePicture ? (
                   <img
@@ -173,7 +191,7 @@ export default function AdminDirectory() {
                 <div>
                   <p className="text-xs text-gray-400 dark:text-gray-500">Phone Number</p>
                   <p className="text-sm font-medium text-gray-800 dark:text-gray-100">
-                    {selected.phone || "Not specified"}
+                    {selected.phone ? selected.phone : "Not specified"}
                   </p>
                 </div>
                 <div>
@@ -183,42 +201,36 @@ export default function AdminDirectory() {
                 <div>
                   <p className="text-xs text-gray-400 dark:text-gray-500">Emergency Contact</p>
                   <p className="text-sm font-medium text-gray-800 dark:text-gray-100">
-                    {selected.emergencyContact || "Not specified"}
+                    {selected.emergencyContact ? selected.emergencyContact : "Not specified"}
                   </p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-400 dark:text-gray-500">Vehicle Registered</p>
                   <p className="text-sm font-medium text-gray-800 dark:text-gray-100">
-                    {selected.vehicleNumber || "Not specified"}
+                    {selected.vehicleNumber ? selected.vehicleNumber : "Not specified"}
                   </p>
                 </div>
               </div>
 
               <div className="flex gap-2 mt-5">
-                
-                  href={selected.phone ? "tel:" + selected.phone : undefined}
-                  className={
-                    selected.phone
-                      ? "flex-1 flex items-center justify-center gap-1 border border-gray-200 dark:border-gray-700 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300"
-                      : "flex-1 flex items-center justify-center gap-1 border border-gray-200 dark:border-gray-700 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 opacity-50 pointer-events-none"
-                  }
+                <button
+                  onClick={handleCall}
+                  disabled={!selected.phone}
+                  className="flex-1 flex items-center justify-center gap-1 border border-gray-200 dark:border-gray-700 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 disabled:opacity-50"
                 >
                   <Phone size={14} />
-                  {" Call"}
-                </a>
-                
-                  href={selected.email ? "mailto:" + selected.email : undefined}
-                  className={
-                    selected.email
-                      ? "flex-1 flex items-center justify-center gap-1 bg-purple-600 text-white py-2 rounded-lg text-sm font-medium"
-                      : "flex-1 flex items-center justify-center gap-1 bg-purple-600 text-white py-2 rounded-lg text-sm font-medium opacity-50 pointer-events-none"
-                  }
+                  <span>Call</span>
+                </button>
+                <button
+                  onClick={handleMessage}
+                  disabled={!selected.email}
+                  className="flex-1 flex items-center justify-center gap-1 bg-purple-600 text-white py-2 rounded-lg text-sm font-medium disabled:opacity-50"
                 >
                   <MessageSquare size={14} />
-                  {" Message"}
-                </a>
+                  <span>Message</span>
+                </button>
               </div>
-            </>
+            </div>
           )}
         </div>
       </div>
