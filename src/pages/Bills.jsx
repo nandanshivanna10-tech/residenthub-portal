@@ -2,11 +2,13 @@ import { useState, useEffect } from "react";
 import { CreditCard, CheckCircle, Calendar as CalendarIcon, Download } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
 import { useCurrency } from "../context/CurrencyContext";
+import { useAuth } from "../context/AuthContext";
 import api from "../api/axios";
 
 export default function Bills() {
   const { t } = useLanguage();
   const { formatAmount } = useCurrency();
+  const { user } = useAuth();
 
   const [summary, setSummary] = useState({
     totalDue: 0,
@@ -42,14 +44,53 @@ export default function Bills() {
     fetchData();
   }, []);
 
-  const handlePay = async (id) => {
-    setPayingId(id);
+  const handlePay = async (bill) => {
+    setPayingId(bill._id);
+    setError("");
     try {
-      await api.patch(`/bills/${id}/pay`);
-      fetchData();
+      const orderRes = await api.post("/bills/" + bill._id + "/create-order");
+      const { orderId, amount, currency, keyId, billId } = orderRes.data;
+
+      const options = {
+        key: keyId,
+        amount: amount,
+        currency: currency,
+        name: "ResidentHub by Code Morphicx",
+        description: bill.type,
+        order_id: orderId,
+        prefill: {
+          name: user?.fullName || "",
+          email: user?.email || "",
+        },
+        theme: {
+          color: "#2563eb",
+        },
+        handler: async function (response) {
+          try {
+            await api.post("/bills/verify-payment", {
+              billId: billId,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+            fetchData();
+          } catch (err) {
+            setError("Payment verification failed. Please contact support.");
+          } finally {
+            setPayingId(null);
+          }
+        },
+        modal: {
+          ondismiss: function () {
+            setPayingId(null);
+          },
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
     } catch (err) {
-      setError("Failed to process payment");
-    } finally {
+      setError(err.response?.data?.message || "Failed to start payment");
       setPayingId(null);
     }
   };
@@ -145,7 +186,7 @@ export default function Bills() {
                   </td>
                   <td className="px-4 py-3">
                     <button
-                      onClick={() => handlePay(b._id)}
+                      onClick={() => handlePay(b)}
                       disabled={payingId === b._id}
                       className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium disabled:opacity-60"
                     >
