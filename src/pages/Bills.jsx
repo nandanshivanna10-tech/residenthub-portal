@@ -45,55 +45,60 @@ export default function Bills() {
   }, []);
 
   const handlePay = async (bill) => {
-    setPayingId(bill._id);
-    setError("");
-    try {
-      const orderRes = await api.post("/bills/" + bill._id + "/create-order");
-      const { orderId, amount, currency, keyId, billId } = orderRes.data;
+  if (bill.amount < 10) {
+    setError("Bill amount must be at least ₹10.00 to process payment");
+    return;
+  }
 
-      const options = {
-        key: keyId,
-        amount: amount,
-        currency: currency,
-        name: "ResidentHub by Code Morphicx",
-        description: bill.type,
-        order_id: orderId,
-        prefill: {
-          name: user?.fullName || "",
-          email: user?.email || "",
-        },
-        theme: {
-          color: "#2563eb",
-        },
-        handler: async function (response) {
-          try {
-            await api.post("/bills/verify-payment", {
-              billId: billId,
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-            });
-            fetchData();
-          } catch (err) {
-            setError("Payment verification failed. Please contact support.");
-          } finally {
-            setPayingId(null);
-          }
-        },
-        modal: {
-          ondismiss: function () {
-            setPayingId(null);
-          },
-        },
-      };
+  setPayingId(bill._id);
+  setError("");
+  try {
+    const orderRes = await api.post("/bills/" + bill._id + "/create-order");
+    const { orderId, amount, currency, keyId, billId } = orderRes.data;
 
-      const rzp = new window.Razorpay(options);
-      rzp.open();
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to start payment");
-      setPayingId(null);
-    }
-  };
+    const options = {
+      key: keyId,
+      amount: amount,
+      currency: currency,
+      name: "ResidentHub by Code Morphicx",
+      description: bill.type,
+      order_id: orderId,
+      prefill: {
+        name: user?.fullName || "",
+        email: user?.email || "",
+      },
+      theme: {
+        color: "#2563eb",
+      },
+      handler: async function (response) {
+        try {
+          await api.post("/bills/verify-payment", {
+            billId: billId,
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+          });
+          fetchData();
+        } catch (err) {
+          setError("Payment verification failed. Please contact support.");
+        } finally {
+          setPayingId(null);
+        }
+      },
+      modal: {
+        ondismiss: function () {
+          setPayingId(null);
+        },
+      },
+    };
+
+    const rzp = new window.Razorpay(options);
+    rzp.open();
+  } catch (err) {
+    setError(err.response?.data?.message || "Failed to start payment");
+    setPayingId(null);
+  }
+ };
 
   const formatDate = (dateStr) => {
     if (!dateStr) return "-";
