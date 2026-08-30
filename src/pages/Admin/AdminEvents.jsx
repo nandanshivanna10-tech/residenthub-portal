@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Plus, Pencil, Trash2, Upload, X } from "lucide-react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 import api from "../../api/axios";
 
 const categoryOptions = ["Cultural", "Health & Wellness", "Sports", "Social"];
@@ -18,7 +18,7 @@ export default function AdminEvents() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [deletingId, setDeletingId] = useState(null);
+  const fileInputRef = useRef(null);
 
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -29,15 +29,13 @@ export default function AdminEvents() {
   const [date, setDate] = useState("");
   const [location, setLocation] = useState("");
   const [imageUrl, setImageUrl] = useState("");
-  const [imagePreview, setImagePreview] = useState("");
-  const [uploading, setUploading] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const fileInputRef = useRef(null);
 
   const fetchEvents = async () => {
     try {
       setLoading(true);
-      const res = await api.get("/events");
+      const res = await api.get("/events?filter=All");
       setEvents(res.data);
     } catch (err) {
       setError("Failed to load events");
@@ -58,16 +56,12 @@ export default function AdminEvents() {
     setDate("");
     setLocation("");
     setImageUrl("");
-    setImagePreview("");
     setEditingId(null);
     setShowForm(false);
-    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const openCreateForm = () => {
     resetForm();
-    setError("");
-    setSuccess("");
     setShowForm(true);
   };
 
@@ -76,49 +70,41 @@ export default function AdminEvents() {
     setTitle(e.title);
     setCategory(e.category);
     setDescription(e.description);
-    setOrganizer(e.organizer || "");
-    setDate(e.date ? new Date(e.date).toISOString().slice(0, 16) : "");
+    setOrganizer(e.organizer);
+    setDate(e.date ? e.date.slice(0, 16) : "");
     setLocation(e.location);
     setImageUrl(e.imageUrl || "");
-    setImagePreview(e.imageUrl || "");
-    setError("");
-    setSuccess("");
     setShowForm(true);
   };
 
-  const handleImageSelect = async (ev) => {
-    const file = ev.target.files[0];
+  const handleImageClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
     if (!file) return;
 
-    setImagePreview(URL.createObjectURL(file));
-    setUploading(true);
-    setError("");
-
-    try {
-      const formData = new FormData();
-      formData.append("image", file);
-
-      const res = await api.post("/upload", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-
-      setImageUrl(res.data.imageUrl);
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to upload image");
-      setImagePreview("");
-    } finally {
-      setUploading(false);
+    if (!file.type.startsWith("image/")) {
+      setError("Please select a valid image file");
+      return;
     }
+    if (file.size > 15 * 1024 * 1024) {
+      setError("Image must be under 15MB");
+      return;
+    }
+
+    setUploadingImage(true);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImageUrl(reader.result);
+      setUploadingImage(false);
+    };
+    reader.readAsDataURL(file);
   };
 
-  const handleRemoveImage = () => {
-    setImageUrl("");
-    setImagePreview("");
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
-
-  const handleSubmit = async (ev) => {
-    ev.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     if (!title || !description || !date || !location) return;
     setSubmitting(true);
     setError("");
@@ -126,7 +112,7 @@ export default function AdminEvents() {
     try {
       const payload = { title, category, description, organizer, date, location, imageUrl };
       if (editingId) {
-        await api.put(`/events/${editingId}`, payload);
+        await api.put("/events/" + editingId, payload);
         setSuccess("Event updated");
       } else {
         await api.post("/events", payload);
@@ -143,28 +129,13 @@ export default function AdminEvents() {
 
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this event?")) return;
-    setError("");
-    setSuccess("");
-    setDeletingId(id);
     try {
-      await api.delete(`/events/${id}`);
+      await api.delete("/events/" + id);
       setSuccess("Event deleted");
       fetchEvents();
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to delete event");
-    } finally {
-      setDeletingId(null);
+      setError("Failed to delete event");
     }
-  };
-
-  const formatEventDate = (dateStr) => {
-    return new Date(dateStr).toLocaleString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    });
   };
 
   return (
@@ -172,7 +143,7 @@ export default function AdminEvents() {
       <div className="flex justify-between items-start mb-6">
         <div>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Manage Events</h2>
-          <p className="text-gray-500 dark:text-gray-400">Create, edit, and remove community events</p>
+          <p className="text-gray-500 dark:text-gray-400">Create, edit, and remove community events with photos</p>
         </div>
         <button
           onClick={openCreateForm}
@@ -183,15 +154,13 @@ export default function AdminEvents() {
       </div>
 
       {error && (
-        <div className="mb-4 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-sm flex justify-between items-center">
-          <span>{error}</span>
-          <button onClick={() => setError("")} className="text-red-400 hover:text-red-600">✕</button>
+        <div className="mb-4 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-sm">
+          {error}
         </div>
       )}
       {success && (
-        <div className="mb-4 px-3 py-2 rounded-lg bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-400 text-sm flex justify-between items-center">
-          <span>{success}</span>
-          <button onClick={() => setSuccess("")} className="text-green-400 hover:text-green-600">✕</button>
+        <div className="mb-4 px-3 py-2 rounded-lg bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-400 text-sm">
+          {success}
         </div>
       )}
 
@@ -209,15 +178,17 @@ export default function AdminEvents() {
               <img
                 src={e.imageUrl || defaultFallback}
                 alt={e.title}
-                className="w-full h-40 object-cover bg-gray-100 dark:bg-gray-800"
+                className="w-full h-40 object-cover"
                 onError={(ev) => {
                   ev.target.onerror = null;
                   ev.target.src = defaultFallback;
                 }}
               />
               <div className="p-4">
-                <div className="flex justify-between items-center mb-2">
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${categoryColorMap[e.category] || categoryColorMap.Social}`}>
+                <div className="flex justify-between items-start mb-2">
+                  <span
+                    className={"text-xs px-2 py-0.5 rounded-full font-medium " + (categoryColorMap[e.category] || categoryColorMap.Social)}
+                  >
                     {e.category}
                   </span>
                   <div className="flex gap-2">
@@ -230,8 +201,7 @@ export default function AdminEvents() {
                     </button>
                     <button
                       onClick={() => handleDelete(e._id)}
-                      disabled={deletingId === e._id}
-                      className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 text-red-500 dark:text-red-400 disabled:opacity-50"
+                      className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 text-red-500 dark:text-red-400"
                       title="Delete"
                     >
                       <Trash2 size={14} />
@@ -239,11 +209,7 @@ export default function AdminEvents() {
                   </div>
                 </div>
                 <p className="font-semibold text-gray-900 dark:text-gray-100 mb-1">{e.title}</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{e.description}</p>
-                <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 mb-1">
-                  <span>{formatEventDate(e.date)}</span>
-                  <span>+{e.attendeeCount || 0} going</span>
-                </div>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{e.description}</p>
                 <p className="text-xs text-gray-400 dark:text-gray-500">{e.location}</p>
               </div>
             </div>
@@ -252,8 +218,8 @@ export default function AdminEvents() {
       )}
 
       {showForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-5 w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-5 w-full max-w-md my-8">
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-semibold text-gray-900 dark:text-gray-100">
                 {editingId ? "Edit Event" : "New Event"}
@@ -262,6 +228,30 @@ export default function AdminEvents() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-3">
+              <div>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Event Photo</label>
+                <div className="mt-1 flex items-center gap-3">
+                  {imageUrl && (
+                    <img src={imageUrl} alt="preview" className="w-16 h-16 rounded-lg object-cover" />
+                  )}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleImageClick}
+                    disabled={uploadingImage}
+                    className="border border-gray-200 dark:border-gray-700 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 disabled:opacity-60"
+                  >
+                    {uploadingImage ? "Uploading..." : imageUrl ? "Change Photo" : "Upload Photo"}
+                  </button>
+                </div>
+              </div>
+
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Title</label>
                 <input
@@ -324,54 +314,10 @@ export default function AdminEvents() {
                 />
               </div>
 
-              <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Event Photo</label>
-
-                {imagePreview ? (
-                  <div className="relative mt-2">
-                    <img
-                      src={imagePreview}
-                      alt="Preview"
-                      className="w-full h-40 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleRemoveImage}
-                      className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1.5 hover:bg-black/80"
-                    >
-                      <X size={14} />
-                    </button>
-                    {uploading && (
-                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-lg">
-                        <p className="text-white text-sm">Uploading...</p>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="mt-2 w-full flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg py-6 text-gray-500 dark:text-gray-400 hover:border-purple-400 dark:hover:border-purple-600 transition"
-                  >
-                    <Upload size={20} />
-                    <span className="text-sm">Tap to choose a photo from your device</span>
-                  </button>
-                )}
-
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  capture="environment"
-                  onChange={handleImageSelect}
-                  className="hidden"
-                />
-              </div>
-
               <div className="flex gap-2 pt-2">
                 <button
                   type="submit"
-                  disabled={submitting || uploading}
+                  disabled={submitting}
                   className="flex-1 bg-purple-600 text-white py-2 rounded-lg text-sm font-medium disabled:opacity-60"
                 >
                   {submitting ? "..." : editingId ? "Save Changes" : "Create Event"}
