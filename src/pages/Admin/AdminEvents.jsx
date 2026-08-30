@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Users } from "lucide-react";
 import api from "../../api/axios";
 
 const categoryOptions = ["Cultural", "Health & Wellness", "Sports", "Social"];
@@ -12,6 +12,18 @@ const categoryColorMap = {
 };
 
 const defaultFallback = "https://images.pexels.com/photos/1105666/pexels-photo-1105666.jpeg?w=500&auto=compress";
+
+function toDatetimeLocalValue(isoString) {
+  if (!isoString) return "";
+  const d = new Date(isoString);
+  const pad = (n) => String(n).padStart(2, "0");
+  const year = d.getFullYear();
+  const month = pad(d.getMonth() + 1);
+  const day = pad(d.getDate());
+  const hours = pad(d.getHours());
+  const minutes = pad(d.getMinutes());
+  return year + "-" + month + "-" + day + "T" + hours + ":" + minutes;
+}
 
 export default function AdminEvents() {
   const [events, setEvents] = useState([]);
@@ -31,6 +43,10 @@ export default function AdminEvents() {
   const [imageUrl, setImageUrl] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  const [showAttendees, setShowAttendees] = useState(false);
+  const [attendeesLoading, setAttendeesLoading] = useState(false);
+  const [attendeesData, setAttendeesData] = useState(null);
 
   const fetchEvents = async () => {
     try {
@@ -65,15 +81,15 @@ export default function AdminEvents() {
     setShowForm(true);
   };
 
-  const openEditForm = (e) => {
-    setEditingId(e._id);
-    setTitle(e.title);
-    setCategory(e.category);
-    setDescription(e.description);
-    setOrganizer(e.organizer);
-    setDate(e.date ? e.date.slice(0, 16) : "");
-    setLocation(e.location);
-    setImageUrl(e.imageUrl || "");
+  const openEditForm = (ev) => {
+    setEditingId(ev._id);
+    setTitle(ev.title || "");
+    setCategory(ev.category || "Cultural");
+    setDescription(ev.description || "");
+    setOrganizer(ev.organizer || "");
+    setDate(toDatetimeLocalValue(ev.date));
+    setLocation(ev.location || "");
+    setImageUrl(ev.imageUrl || "");
     setShowForm(true);
   };
 
@@ -110,7 +126,15 @@ export default function AdminEvents() {
     setError("");
     setSuccess("");
     try {
-      const payload = { title, category, description, organizer, date, location, imageUrl };
+      const payload = {
+        title,
+        category,
+        description,
+        organizer,
+        date: new Date(date).toISOString(),
+        location,
+        imageUrl,
+      };
       if (editingId) {
         await api.put("/events/" + editingId, payload);
         setSuccess("Event updated");
@@ -135,6 +159,21 @@ export default function AdminEvents() {
       fetchEvents();
     } catch (err) {
       setError("Failed to delete event");
+    }
+  };
+
+  const openAttendees = async (id) => {
+    setShowAttendees(true);
+    setAttendeesLoading(true);
+    setAttendeesData(null);
+    try {
+      const res = await api.get("/events/" + id + "/attendees");
+      setAttendeesData(res.data);
+    } catch (err) {
+      setError("Failed to load attendees");
+      setShowAttendees(false);
+    } finally {
+      setAttendeesLoading(false);
     }
   };
 
@@ -170,37 +209,44 @@ export default function AdminEvents() {
         <p className="text-sm text-gray-400 dark:text-gray-500">No events yet</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {events.map((e) => (
+          {events.map((ev) => (
             <div
-              key={e._id}
+              key={ev._id}
               className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors"
             >
               <img
-                src={e.imageUrl || defaultFallback}
-                alt={e.title}
+                src={ev.imageUrl || defaultFallback}
+                alt={ev.title}
                 className="w-full h-40 object-cover"
-                onError={(ev) => {
-                  ev.target.onerror = null;
-                  ev.target.src = defaultFallback;
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = defaultFallback;
                 }}
               />
               <div className="p-4">
                 <div className="flex justify-between items-start mb-2">
                   <span
-                    className={"text-xs px-2 py-0.5 rounded-full font-medium " + (categoryColorMap[e.category] || categoryColorMap.Social)}
+                    className={"text-xs px-2 py-0.5 rounded-full font-medium " + (categoryColorMap[ev.category] || categoryColorMap.Social)}
                   >
-                    {e.category}
+                    {ev.category}
                   </span>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => openEditForm(e)}
+                      onClick={() => openAttendees(ev._id)}
+                      className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400"
+                      title="View Attendees"
+                    >
+                      <Users size={14} />
+                    </button>
+                    <button
+                      onClick={() => openEditForm(ev)}
                       className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400"
                       title="Edit"
                     >
                       <Pencil size={14} />
                     </button>
                     <button
-                      onClick={() => handleDelete(e._id)}
+                      onClick={() => handleDelete(ev._id)}
                       className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 text-red-500 dark:text-red-400"
                       title="Delete"
                     >
@@ -208,9 +254,17 @@ export default function AdminEvents() {
                     </button>
                   </div>
                 </div>
-                <p className="font-semibold text-gray-900 dark:text-gray-100 mb-1">{e.title}</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{e.description}</p>
-                <p className="text-xs text-gray-400 dark:text-gray-500">{e.location}</p>
+                <p className="font-semibold text-gray-900 dark:text-gray-100 mb-1">{ev.title}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{ev.description}</p>
+                <div className="flex justify-between items-center">
+                  <p className="text-xs text-gray-400 dark:text-gray-500">{ev.location}</p>
+                  <button
+                    onClick={() => openAttendees(ev._id)}
+                    className="text-xs text-purple-600 dark:text-purple-400 font-medium"
+                  >
+                    {ev.attendeeCount || 0} registered
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -331,6 +385,45 @@ export default function AdminEvents() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {showAttendees && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-5 w-full max-w-md max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                {attendeesData ? "Registered: " + attendeesData.eventTitle : "Registered Attendees"}
+              </h3>
+              <button onClick={() => setShowAttendees(false)} className="text-gray-400">✕</button>
+            </div>
+
+            {attendeesLoading ? (
+              <p className="text-sm text-gray-400 dark:text-gray-500">Loading...</p>
+            ) : !attendeesData || attendeesData.attendees.length === 0 ? (
+              <p className="text-sm text-gray-400 dark:text-gray-500">No one has registered yet</p>
+            ) : (
+              <div className="space-y-2">
+                {attendeesData.attendees.map((a) => (
+                  <div key={a._id} className="flex items-center gap-3 bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+                    {a.profilePicture ? (
+                      <img src={a.profilePicture} alt={a.fullName} className="w-10 h-10 rounded-full object-cover" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-950 flex items-center justify-center text-sm font-semibold text-purple-600 dark:text-purple-400">
+                        {a.fullName.charAt(0)}
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{a.fullName}</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500">
+                        {a.tower} {a.unit ? "- " + a.unit : ""} {a.phone ? "• " + a.phone : ""}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
