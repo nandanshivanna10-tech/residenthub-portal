@@ -6,6 +6,7 @@ import { useCurrency, currencyList } from "../context/CurrencyContext";
 import { languageList } from "../context/LanguageContext";
 import { Sun, Moon } from "lucide-react";
 import api from "../api/axios";
+import PhoneInput from "../components/ui/PhoneInput";
 
 export default function Profile() {
   const { t, lang, changeLanguage } = useLanguage();

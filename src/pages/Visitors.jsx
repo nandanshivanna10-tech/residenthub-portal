@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from "react";
-import { QRCodeCanvas } from "qrcode.react";
-import { Download } from "lucide-react";
+import { useState, useEffect } from "react";
 import { useLanguage } from "../context/LanguageContext";
+import { QRCodeSVG } from "qrcode.react";
+import PhoneInput from "../components/ui/PhoneInput";
 import api from "../api/axios";
 
 export default function Visitors() {
@@ -12,6 +12,7 @@ export default function Visitors() {
   const [error, setError] = useState("");
 
   const [name, setName] = useState("");
+  const [countryCode, setCountryCode] = useState("+91");
   const [phone, setPhone] = useState("");
   const [purpose, setPurpose] = useState("");
   const [expectedAt, setExpectedAt] = useState("");
@@ -20,6 +21,7 @@ export default function Visitors() {
 
   const [editingVisitor, setEditingVisitor] = useState(null);
   const [editName, setEditName] = useState("");
+  const [editCountryCode, setEditCountryCode] = useState("+91");
   const [editPhone, setEditPhone] = useState("");
   const [editPurpose, setEditPurpose] = useState("");
   const [editExpectedAt, setEditExpectedAt] = useState("");
@@ -27,7 +29,6 @@ export default function Visitors() {
   const [savingEdit, setSavingEdit] = useState(false);
 
   const [qrVisitor, setQrVisitor] = useState(null);
-  const qrRef = useRef(null);
 
   const fetchData = async () => {
     try {
@@ -54,7 +55,7 @@ export default function Visitors() {
     if (!name || !expectedAt) return;
     setSubmitting(true);
     try {
-      const res = await api.post("/visitors", { name, phone, purpose, expectedAt, vehicleNumber });
+      const res = await api.post("/visitors", { name, phone, countryCode, purpose, expectedAt, vehicleNumber });
       setName("");
       setPhone("");
       setPurpose("");
@@ -71,7 +72,7 @@ export default function Visitors() {
 
   const handleRevoke = async (id) => {
     try {
-      await api.patch(`/visitors/${id}/revoke`);
+      await api.patch("/visitors/" + id + "/revoke");
       fetchData();
     } catch (err) {
       setError("Failed to revoke pass");
@@ -81,6 +82,7 @@ export default function Visitors() {
   const openEditModal = (visitor) => {
     setEditingVisitor(visitor);
     setEditName(visitor.name || "");
+    setEditCountryCode(visitor.countryCode || "+91");
     setEditPhone(visitor.phone || "");
     setEditPurpose(visitor.purpose || "");
     setEditExpectedAt(visitor.expectedAt ? visitor.expectedAt.slice(0, 16) : "");
@@ -96,9 +98,10 @@ export default function Visitors() {
     if (!editingVisitor) return;
     setSavingEdit(true);
     try {
-      await api.put(`/visitors/${editingVisitor._id}`, {
+      await api.put("/visitors/" + editingVisitor._id, {
         name: editName,
         phone: editPhone,
+        countryCode: editCountryCode,
         purpose: editPurpose,
         expectedAt: editExpectedAt,
         vehicleNumber: editVehicleNumber,
@@ -110,16 +113,6 @@ export default function Visitors() {
     } finally {
       setSavingEdit(false);
     }
-  };
-
-  const downloadQrCode = () => {
-    const canvas = qrRef.current?.querySelector("canvas");
-    if (!canvas) return;
-    const url = canvas.toDataURL("image/png");
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `visitor-pass-${qrVisitor?.name?.replace(/\s+/g, "-") || "pass"}.png`;
-    link.click();
   };
 
   const formatDateTime = (dateStr) => {
@@ -165,7 +158,9 @@ export default function Visitors() {
                       </div>
                       <div>
                         <p className="font-medium text-gray-900 dark:text-gray-100 text-sm">{v.name}</p>
-                        <p className="text-xs text-gray-400 dark:text-gray-500">{v.phone}</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500">
+                          {v.countryCode} {v.phone}
+                        </p>
                       </div>
                     </div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">Purpose: {v.purpose}</p>
@@ -175,7 +170,7 @@ export default function Visitors() {
                     <div className="flex gap-2">
                       <button
                         onClick={() => setQrVisitor(v)}
-                        className="flex-1 bg-purple-50 dark:bg-purple-950 text-purple-600 dark:text-purple-400 py-1.5 rounded-lg text-xs font-medium"
+                        className="flex-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 py-1.5 rounded-lg text-xs font-medium"
                       >
                         View QR
                       </button>
@@ -249,15 +244,15 @@ export default function Visitors() {
                 className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100"
               />
             </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("phoneNumber")}</label>
-              <input
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="e.g., +91 9876543210"
-                className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100"
-              />
-            </div>
+
+            <PhoneInput
+              label={t("phoneNumber")}
+              countryCode={countryCode}
+              phone={phone}
+              onCountryChange={setCountryCode}
+              onPhoneChange={setPhone}
+            />
+
             <div>
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("visitPurpose")}</label>
               <input
@@ -296,6 +291,25 @@ export default function Visitors() {
         </div>
       </div>
 
+      {qrVisitor && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-6 w-full max-w-sm text-center">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100">Visitor QR Pass</h3>
+              <button onClick={() => setQrVisitor(null)} className="text-gray-400">✕</button>
+            </div>
+            <div className="bg-white p-4 rounded-lg inline-block">
+              <QRCodeSVG value={qrVisitor.qrCode || "invalid"} size={200} />
+            </div>
+            <p className="mt-4 font-medium text-gray-900 dark:text-gray-100">{qrVisitor.name}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{formatDateTime(qrVisitor.expectedAt)}</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
+              Show this QR code to security at the gate
+            </p>
+          </div>
+        </div>
+      )}
+
       {editingVisitor && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-5 w-full max-w-md">
@@ -313,14 +327,15 @@ export default function Visitors() {
                   className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100"
                 />
               </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("phoneNumber")}</label>
-                <input
-                  value={editPhone}
-                  onChange={(e) => setEditPhone(e.target.value)}
-                  className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100"
-                />
-              </div>
+
+              <PhoneInput
+                label={t("phoneNumber")}
+                countryCode={editCountryCode}
+                phone={editPhone}
+                onCountryChange={setEditCountryCode}
+                onPhoneChange={setEditPhone}
+              />
+
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("visitPurpose")}</label>
                 <input
@@ -364,33 +379,6 @@ export default function Visitors() {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {qrVisitor && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-6 w-full max-w-sm text-center">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-semibold text-gray-900 dark:text-gray-100">Visitor QR Pass</h3>
-              <button onClick={() => setQrVisitor(null)} className="text-gray-400">✕</button>
-            </div>
-
-            <div ref={qrRef} className="flex justify-center mb-4 bg-white p-4 rounded-lg">
-              <QRCodeCanvas value={qrVisitor._id} size={200} />
-            </div>
-
-            <p className="font-medium text-gray-900 dark:text-gray-100">{qrVisitor.name}</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-              Show this QR code to security at the gate
-            </p>
-
-            <button
-              onClick={downloadQrCode}
-              className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-2.5 rounded-lg text-sm font-medium"
-            >
-              <Download size={16} /> Download QR Pass
-            </button>
           </div>
         </div>
       )}
