@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLanguage } from "../context/LanguageContext";
 import { QRCodeSVG } from "qrcode.react";
+import { toPng } from "html-to-image";
 import PhoneInput from "../components/ui/PhoneInput";
 import api from "../api/axios";
 
@@ -29,6 +30,7 @@ export default function Visitors() {
   const [savingEdit, setSavingEdit] = useState(false);
 
   const [qrVisitor, setQrVisitor] = useState(null);
+  const qrRef = useRef(null);
 
   const fetchData = async () => {
     try {
@@ -112,6 +114,19 @@ export default function Visitors() {
       setError("Failed to update visitor");
     } finally {
       setSavingEdit(false);
+    }
+  };
+
+  const handleDownloadQr = async () => {
+    if (!qrRef.current) return;
+    try {
+      const dataUrl = await toPng(qrRef.current);
+      const link = document.createElement("a");
+      link.download = "visitor-pass-" + (qrVisitor?.name || "qr") + ".png";
+      link.href = dataUrl;
+      link.click();
+    } catch (err) {
+      setError("Failed to download QR code");
     }
   };
 
@@ -298,7 +313,7 @@ export default function Visitors() {
               <h3 className="font-semibold text-gray-900 dark:text-gray-100">Visitor QR Pass</h3>
               <button onClick={() => setQrVisitor(null)} className="text-gray-400">✕</button>
             </div>
-            <div className="bg-white p-4 rounded-lg inline-block">
+            <div ref={qrRef} className="bg-white p-4 rounded-lg inline-block">
               <QRCodeSVG value={qrVisitor.qrCode || "invalid"} size={200} />
             </div>
             <p className="mt-4 font-medium text-gray-900 dark:text-gray-100">{qrVisitor.name}</p>
@@ -306,6 +321,12 @@ export default function Visitors() {
             <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
               Show this QR code to security at the gate
             </p>
+            <button
+              onClick={handleDownloadQr}
+              className="w-full mt-4 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium"
+            >
+              Download QR Code
+            </button>
           </div>
         </div>
       )}
