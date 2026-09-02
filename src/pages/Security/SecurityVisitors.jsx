@@ -17,10 +17,8 @@ export default function SecurityVisitors() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [expectedRes, historyRes] = await Promise.all([
-        api.get("/visitors/security/expected"),
-        api.get("/visitors/security/history"),
-      ]);
+      const expectedRes = await api.get("/visitors/security/expected");
+      const historyRes = await api.get("/visitors/security/history");
       setExpectedVisitors(expectedRes.data);
       setHistory(historyRes.data);
     } catch (err) {
@@ -36,21 +34,31 @@ export default function SecurityVisitors() {
 
   useEffect(() => {
     if (scanning) {
-      const scanner = new Html5QrcodeScanner(
-        "qr-reader",
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        false
-      );
+      const config = {
+        fps: 10,
+        qrbox: { width: 250, height: 250 },
+        aspectRatio: 1.0,
+        disableFlip: false,
+      };
 
-      scanner.render(
-        async (decodedText) => {
-          scanner.clear();
-          setScanning(false);
-          await handleScanResult(decodedText);
-        },
-        (err) => {}
-      );
+      const scanner = new Html5QrcodeScanner("qr-reader", config, false);
 
+      const onScanSuccess = async (decodedText) => {
+        console.log("QR detected:", decodedText);
+        try {
+          await scanner.clear();
+        } catch (e) {
+          console.log("Scanner clear error:", e);
+        }
+        setScanning(false);
+        await handleScanResult(decodedText);
+      };
+
+      const onScanFailure = (errorMessage) => {
+        // Fires continuously while no QR is detected - expected, no action needed
+      };
+
+      scanner.render(onScanSuccess, onScanFailure);
       scannerRef.current = scanner;
     }
 
@@ -130,7 +138,8 @@ export default function SecurityVisitors() {
               onClick={() => setScanning(true)}
               className="w-full flex items-center justify-center gap-2 bg-green-600 text-white py-3 rounded-lg text-sm font-medium"
             >
-              <Camera size={18} /> Start Scanning
+              <Camera size={18} />
+              <span>Start Scanning</span>
             </button>
           )}
 
@@ -154,7 +163,9 @@ export default function SecurityVisitors() {
               </div>
               <p className="text-sm text-gray-800 dark:text-gray-100 font-medium">{scannedVisitor.name}</p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                Visiting: {scannedVisitor.user?.fullName} ({scannedVisitor.user?.tower} - {scannedVisitor.user?.unit})
+                Visiting: {scannedVisitor.user ? scannedVisitor.user.fullName : ""} (
+                {scannedVisitor.user ? scannedVisitor.user.tower : ""} -{" "}
+                {scannedVisitor.user ? scannedVisitor.user.unit : ""})
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">Purpose: {scannedVisitor.purpose}</p>
               <div className="flex gap-2 mt-3">
@@ -188,24 +199,26 @@ export default function SecurityVisitors() {
                 </tr>
               </thead>
               <tbody>
-                {loading ? (
+                {loading && (
                   <tr>
                     <td colSpan={4} className="px-4 py-6 text-center text-gray-400 dark:text-gray-500">
                       Loading...
                     </td>
                   </tr>
-                ) : expectedVisitors.length === 0 ? (
+                )}
+                {!loading && expectedVisitors.length === 0 && (
                   <tr>
                     <td colSpan={4} className="px-4 py-6 text-center text-gray-400 dark:text-gray-500">
                       No visitors expected
                     </td>
                   </tr>
-                ) : (
+                )}
+                {!loading &&
                   expectedVisitors.map((v) => (
                     <tr key={v._id} className="border-t border-gray-100 dark:border-gray-800">
                       <td className="px-4 py-3 text-gray-800 dark:text-gray-100">{v.name}</td>
                       <td className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                        {v.user?.fullName} ({v.user?.tower}-{v.user?.unit})
+                        {v.user ? v.user.fullName : ""} ({v.user ? v.user.tower : ""}-{v.user ? v.user.unit : ""})
                       </td>
                       <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{formatDateTime(v.expectedAt)}</td>
                       <td className="px-4 py-3">
@@ -217,8 +230,7 @@ export default function SecurityVisitors() {
                         </button>
                       </td>
                     </tr>
-                  ))
-                )}
+                  ))}
               </tbody>
             </table>
           </div>
@@ -235,27 +247,24 @@ export default function SecurityVisitors() {
                 </tr>
               </thead>
               <tbody>
-                {history.length === 0 ? (
+                {history.length === 0 && (
                   <tr>
                     <td colSpan={4} className="px-4 py-6 text-center text-gray-400 dark:text-gray-500">
                       No recent activity
                     </td>
                   </tr>
-                ) : (
-                  history.map((h) => (
+                )}
+                {history.map((h) => {
+                  const statusClass =
+                    h.status === "Checked In"
+                      ? "bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400 text-xs px-2 py-0.5 rounded-full font-medium"
+                      : "bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400 text-xs px-2 py-0.5 rounded-full font-medium";
+                  return (
                     <tr key={h._id} className="border-t border-gray-100 dark:border-gray-800">
                       <td className="px-4 py-3 text-gray-800 dark:text-gray-100">{h.name}</td>
                       <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{formatDateTime(h.checkInTime)}</td>
                       <td className="px-4 py-3">
-                        <span
-                          className={
-                            h.status === "Checked In"
-                              ? "bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400 text-xs px-2 py-0.5 rounded-full font-medium"
-                              : "bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400 text-xs px-2 py-0.5 rounded-full font-medium"
-                          }
-                        >
-                          {h.status}
-                        </span>
+                        <span className={statusClass}>{h.status}</span>
                       </td>
                       <td className="px-4 py-3">
                         {h.status === "Checked In" && (
@@ -268,8 +277,8 @@ export default function SecurityVisitors() {
                         )}
                       </td>
                     </tr>
-                  ))
-                )}
+                  );
+                })}
               </tbody>
             </table>
           </div>
