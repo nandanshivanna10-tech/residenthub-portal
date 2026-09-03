@@ -8,7 +8,6 @@ import AdminLayout from "../components/layout/AdminLayout";
 import SecurityLayout from "../components/layout/SecurityLayout";
 import ProtectedRoute from "./ProtectedRoute";
 
-import AppRoutes from './routes/AppRoutes'; // Must match actual file casing exactly
 import Dashboard from "../pages/Dashboard";
 import Maintenance from "../pages/Maintenance";
 import Visitors from "../pages/Visitors";
